@@ -30,89 +30,168 @@ const Home: React.FC<HomeProps> = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-teal-400 via-cyan-300 to-sky-400 relative">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-950 via-black to-gray-900">
+      {/* Animated background blobs */}
+      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-pink-600/20 blur-3xl animate-pulse" />
+      <div className="pointer-events-none absolute top-1/2 right-0 h-[500px] w-[500px] rounded-full bg-pink-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-1/4 h-80 w-80 rounded-full bg-fuchsia-600/15 blur-3xl" />
+
       {/* Top-right wallet connect button */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-6 right-6 z-10">
         <button
           data-test-id="connect-wallet"
-          className="btn btn-accent px-5 py-2 text-sm font-medium rounded-full shadow-md"
+          className="bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-700 hover:to-fuchsia-700 text-white px-6 py-2.5 text-sm font-semibold rounded-full shadow-lg shadow-pink-500/30 transition-all duration-200 hover:scale-105"
           onClick={toggleWalletModal}
         >
-          {activeAddress ? 'Wallet Connected' : 'Connect Wallet'}
+          {activeAddress ? '✓ Connected' : 'Connect Wallet'}
         </button>
       </div>
 
-      {/* Centered content with background blur for readability */}
-      <div className="flex items-center justify-center min-h-screen px-4">
-        <div className="backdrop-blur-md bg-white/70 rounded-2xl p-8 shadow-xl max-w-5xl w-full">
-          <h1 className="text-4xl font-extrabold text-teal-700 mb-6 text-center">Algorand Workshop Template</h1>
-          <p className="text-gray-700 mb-8 text-center">Algorand operations in one-place.</p>
+      <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-12 max-w-4xl">
+          <div className="inline-flex items-center gap-2 rounded-full bg-pink-600/20 border border-pink-500/30 px-4 py-1.5 mb-6">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
+            </span>
+            <span className="text-xs font-semibold tracking-wide text-pink-300 uppercase">Student Powered Fundraising</span>
+          </div>
+          
+          <h1 className="font-display text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6">
+            <span className="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-pink-300 bg-clip-text text-transparent">
+              PiggyBag
+            </span>
+          </h1>
+          
+          <p className="text-xl md:text-2xl text-gray-300 mb-4 leading-relaxed">
+            Empower student dreams, one donation at a time.
+          </p>
+          <p className="text-sm md:text-base text-gray-500">
+            Built on Algorand for instant, low-fee micro-donations and transparent blockchain-verified impact.
+          </p>
 
+          {/* Stats */}
+          <div className="mt-10 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+            <div className="bg-gradient-to-br from-pink-900/30 to-fuchsia-900/30 border border-pink-500/20 rounded-2xl p-4">
+              <div className="text-2xl md:text-3xl font-bold text-pink-400">12+</div>
+              <div className="text-xs md:text-sm text-gray-400 mt-1">Active Campaigns</div>
+            </div>
+            <div className="bg-gradient-to-br from-pink-900/30 to-fuchsia-900/30 border border-pink-500/20 rounded-2xl p-4">
+              <div className="text-2xl md:text-3xl font-bold text-pink-400">5.2K</div>
+              <div className="text-xs md:text-sm text-gray-400 mt-1">ALGO Raised</div>
+            </div>
+            <div className="bg-gradient-to-br from-pink-900/30 to-fuchsia-900/30 border border-pink-500/20 rounded-2xl p-4">
+              <div className="text-2xl md:text-3xl font-bold text-pink-400">240+</div>
+              <div className="text-xs md:text-sm text-gray-400 mt-1">Supporters</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Cards */}
+        <div className="max-w-6xl w-full">
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Get Started</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="card bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-xl">
-              <div className="card-body">
-                <h2 className="card-title">Send Algo</h2>
-                <p>Send a payment transaction to any address.</p>
-                <div className="card-actions justify-end">
-                  <button className="btn btn-outline" disabled={!activeAddress} onClick={() => setSendAlgoModal(true)}>Open</button>
-                </div>
+            {/* Donate/Send Algo */}
+            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-pink-600/10 rounded-full blur-2xl group-hover:bg-pink-600/20 transition-all"></div>
+              <div className="relative">
+                <div className="text-4xl mb-3">💸</div>
+                <h3 className="text-xl font-bold text-white mb-2">Donate ALGO</h3>
+                <p className="text-gray-400 text-sm mb-4">Send instant donations to student campaigns you believe in.</p>
+                <button 
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={!activeAddress} 
+                  onClick={() => setSendAlgoModal(true)}
+                >
+                  {activeAddress ? 'Donate Now' : 'Connect Wallet'}
+                </button>
               </div>
             </div>
 
-            <div className="card bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white shadow-xl">
-              <div className="card-body">
-                <h2 className="card-title">Mint NFT (ARC-3)</h2>
-                <p>Upload to IPFS via Pinata and mint a single NFT.</p>
-                <div className="card-actions justify-end">
-                  <button className="btn btn-outline" disabled={!activeAddress} onClick={() => setMintNftModal(true)}>Open</button>
-                </div>
+            {/* Create Campaign/Mint NFT */}
+            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-600/10 rounded-full blur-2xl group-hover:bg-fuchsia-600/20 transition-all"></div>
+              <div className="relative">
+                <div className="text-4xl mb-3">🎨</div>
+                <h3 className="text-xl font-bold text-white mb-2">Campaign NFT</h3>
+                <p className="text-gray-400 text-sm mb-4">Create unique NFT rewards for your campaign supporters.</p>
+                <button 
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={!activeAddress} 
+                  onClick={() => setMintNftModal(true)}
+                >
+                  {activeAddress ? 'Mint NFT' : 'Connect Wallet'}
+                </button>
               </div>
             </div>
 
-            <div className="card bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-xl">
-              <div className="card-body">
-                <h2 className="card-title">Create Token (ASA)</h2>
-                <p>Mint a fungible ASA with custom supply and decimals.</p>
-                <div className="card-actions justify-end">
-                  <button className="btn btn-outline" disabled={!activeAddress} onClick={() => setCreateAsaModal(true)}>Open</button>
-                </div>
+            {/* Create Fundraiser Token */}
+            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-pink-600/10 rounded-full blur-2xl group-hover:bg-pink-600/20 transition-all"></div>
+              <div className="relative">
+                <div className="text-4xl mb-3">🪙</div>
+                <h3 className="text-xl font-bold text-white mb-2">Create Token</h3>
+                <p className="text-gray-400 text-sm mb-4">Launch a custom ASA token for your fundraising campaign.</p>
+                <button 
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={!activeAddress} 
+                  onClick={() => setCreateAsaModal(true)}
+                >
+                  {activeAddress ? 'Create Token' : 'Connect Wallet'}
+                </button>
               </div>
             </div>
 
-            <div className="card bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-xl">
-              <div className="card-body">
-                <h2 className="card-title">Asset Opt-In</h2>
-                <p>Opt-in to any existing ASA to receive tokens.</p>
-                <div className="card-actions justify-end">
-                  <button className="btn btn-outline" disabled={!activeAddress} onClick={() => setAssetOptInModal(true)}>Open</button>
-                </div>
+            {/* Join Campaign/Asset Opt-In */}
+            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-600/10 rounded-full blur-2xl group-hover:bg-fuchsia-600/20 transition-all"></div>
+              <div className="relative">
+                <div className="text-4xl mb-3">✨</div>
+                <h3 className="text-xl font-bold text-white mb-2">Join Campaign</h3>
+                <p className="text-gray-400 text-sm mb-4">Opt-in to receive campaign tokens and rewards.</p>
+                <button 
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={!activeAddress} 
+                  onClick={() => setAssetOptInModal(true)}
+                >
+                  {activeAddress ? 'Opt-In' : 'Connect Wallet'}
+                </button>
               </div>
             </div>
 
-            <div className="card bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-xl md:col-span-2 lg:col-span-1">
-              <div className="card-body">
-                <h2 className="card-title">Counter (App ID 747652603)</h2>
-                <p>Interact with the shared on-chain counter app.</p>
-                <div className="card-actions justify-end">
-                  <button
-                    data-test-id="appcalls-demo"
-                    className="btn btn-outline"
-                    disabled={!activeAddress}
-                    onClick={toggleAppCallsModal}
-                  >
-                    Open
-                  </button>
-                </div>
+            {/* Campaign Stats/Counter */}
+            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-pink-600/10 rounded-full blur-2xl group-hover:bg-pink-600/20 transition-all"></div>
+              <div className="relative">
+                <div className="text-4xl mb-3">📊</div>
+                <h3 className="text-xl font-bold text-white mb-2">Campaign Tracker</h3>
+                <p className="text-gray-400 text-sm mb-4">Track engagement and milestones on-chain.</p>
+                <button 
+                  data-test-id="appcalls-demo"
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={!activeAddress} 
+                  onClick={toggleAppCallsModal}
+                >
+                  {activeAddress ? 'View Stats' : 'Connect Wallet'}
+                </button>
               </div>
             </div>
 
-            <div className="card bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-xl md:col-span-2 lg:col-span-1">
-              <div className="card-body">
-                <h2 className="card-title">Bank</h2>
-                <p>Deposit and withdraw ALGOs and view statements.</p>
-                <div className="card-actions justify-end">
-                  <button className="btn btn-outline" disabled={!activeAddress} onClick={() => setBankModal(true)}>Open</button>
-                </div>
+            {/* Fundraising Vault/Bank */}
+            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-600/10 rounded-full blur-2xl group-hover:bg-fuchsia-600/20 transition-all"></div>
+              <div className="relative">
+                <div className="text-4xl mb-3">🏦</div>
+                <h3 className="text-xl font-bold text-white mb-2">Fundraising Vault</h3>
+                <p className="text-gray-400 text-sm mb-4">Manage campaign funds with secure deposits & withdrawals.</p>
+                <button 
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={!activeAddress} 
+                  onClick={() => setBankModal(true)}
+                >
+                  {activeAddress ? 'Open Vault' : 'Connect Wallet'}
+                </button>
               </div>
             </div>
           </div>
