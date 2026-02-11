@@ -38,14 +38,16 @@
     "@algorandfoundation/algokit-utils": "^9.0.0",
     "@blockshake/defly-connect": "^1.2.1",
     "@perawallet/connect": "^1.4.1",
+    "@supabase/supabase-js": "^2.95.3",
     "@txnlab/use-wallet": "^4.0.0",
     "@txnlab/use-wallet-react": "^4.0.0",
-    "lute-connect": "^1.6.2",
     "algosdk": "^3.0.0",
     "daisyui": "^4.0.0",
+    "lute-connect": "^1.6.2",
     "notistack": "^3.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^7.13.0",
     "tslib": "^2.6.2"
   },
   "scripts": {
