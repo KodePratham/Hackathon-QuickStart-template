@@ -9,6 +9,7 @@ import MintNFT from './components/MintNFT'
 import CreateASA from './components/CreateASA'
 import AssetOptIn from './components/AssetOptIn'
 import Bank from './components/Bank'
+import PiggyBankComponent from './components/PiggyBank'
 
 interface HomeProps {}
 
@@ -20,6 +21,7 @@ const Home: React.FC<HomeProps> = () => {
   const [createAsaModal, setCreateAsaModal] = useState<boolean>(false)
   const [assetOptInModal, setAssetOptInModal] = useState<boolean>(false)
   const [bankModal, setBankModal] = useState<boolean>(false)
+  const [piggyBankModal, setPiggyBankModal] = useState<boolean>(false)
   const { activeAddress } = useWallet()
 
   const toggleWalletModal = () => {
@@ -225,6 +227,45 @@ const Home: React.FC<HomeProps> = () => {
               </button>
             </div>
 
+            {/* PiggyBank */}
+            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
+              <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
+                🐷
+              </div>
+              <h3 className="text-xl font-semibold mb-2">PiggyBank</h3>
+              <p className="text-apple-subtext leading-relaxed mb-6">
+                Create a project with its own token, tradable on Tinyman.
+              </p>
+              <button 
+                onClick={() => setPiggyBankModal(true)}
+                className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
+                disabled={!activeAddress}
+              >
+                {activeAddress ? 'Launch PiggyBank' : 'Connect Wallet'}
+                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
+              </button>
+            </div>
+
+            {/* Trade on Tinyman */}
+            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
+                🔄
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Trade</h3>
+              <p className="text-apple-subtext leading-relaxed mb-6">
+                Swap tokens on Tinyman DEX (Testnet).
+              </p>
+              <a 
+                href="https://testnet.tinyman.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
+              >
+                Open Tinyman
+                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
+              </a>
+            </div>
+
            </div>
         </div>
 
@@ -242,6 +283,7 @@ const Home: React.FC<HomeProps> = () => {
       <CreateASA openModal={createAsaModal} closeModal={() => setCreateAsaModal(false)} />
       <AssetOptIn openModal={assetOptInModal} closeModal={() => setAssetOptInModal(false)} />
       <Bank openModal={bankModal} closeModal={() => setBankModal(false)} />
+      <PiggyBankComponent openModal={piggyBankModal} closeModal={() => setPiggyBankModal(false)} />
     </div>
   )
 }
