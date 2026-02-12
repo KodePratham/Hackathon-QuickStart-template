@@ -1,222 +1,135 @@
-// src/components/Home.tsx
 import { useWallet } from '@txnlab/use-wallet-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import ConnectWallet from './components/ConnectWallet'
-import AppCalls from './components/AppCalls'
-import SendAlgo from './components/SendAlgo'
-import MintNFT from './components/MintNFT'
-import CreateASA from './components/CreateASA'
-import AssetOptIn from './components/AssetOptIn'
-import Bank from './components/Bank'
+import Navbar from './components/Navbar'
+import ProjectFeed from './components/ProjectFeed'
+import { getAllProjects } from './utils/piggybank_supabase'
 
-interface HomeProps {}
-
-const Home: React.FC<HomeProps> = () => {
-  const [openWalletModal, setOpenWalletModal] = useState<boolean>(false)
-  const [appCallsDemoModal, setAppCallsDemoModal] = useState<boolean>(false)
-  const [sendAlgoModal, setSendAlgoModal] = useState<boolean>(false)
-  const [mintNftModal, setMintNftModal] = useState<boolean>(false)
-  const [createAsaModal, setCreateAsaModal] = useState<boolean>(false)
-  const [assetOptInModal, setAssetOptInModal] = useState<boolean>(false)
-  const [bankModal, setBankModal] = useState<boolean>(false)
+const Home: React.FC = () => {
   const { activeAddress } = useWallet()
+  const [projectCount, setProjectCount] = useState(0)
 
-  const toggleWalletModal = () => {
-    setOpenWalletModal(!openWalletModal)
-  }
-
-  const toggleAppCallsModal = () => {
-    setAppCallsDemoModal(!appCallsDemoModal)
-  }
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data } = await getAllProjects()
+      if (data) setProjectCount(data.length)
+    }
+    fetchStats()
+  }, [])
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-950 via-black to-gray-900">
-      {/* Animated background blobs */}
-      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-pink-600/20 blur-3xl animate-pulse" />
-      <div className="pointer-events-none absolute top-1/2 right-0 h-[500px] w-[500px] rounded-full bg-pink-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 left-1/4 h-80 w-80 rounded-full bg-fuchsia-600/15 blur-3xl" />
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
 
-      {/* Top-right navigation */}
-      <div className="absolute top-6 right-6 z-10 flex items-center gap-3">
-        {activeAddress && (
-          <Link
-            to="/profile"
-            className="bg-gray-800/80 hover:bg-gray-700 text-white px-4 py-2.5 text-sm font-semibold rounded-full border border-pink-500/30 hover:border-pink-500/50 transition-all duration-200 flex items-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-            Profile
-          </Link>
-        )}
-        <button
-          data-test-id="connect-wallet"
-          className="bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-700 hover:to-fuchsia-700 text-white px-6 py-2.5 text-sm font-semibold rounded-full shadow-lg shadow-pink-500/30 transition-all duration-200 hover:scale-105"
-          onClick={toggleWalletModal}
-        >
-          {activeAddress ? '✓ Connected' : 'Connect Wallet'}
-        </button>
-      </div>
-
-      <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12">
+      <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto">
         {/* Hero Section */}
-        <div className="text-center mb-12 max-w-4xl">
-          <div className="inline-flex items-center gap-2 rounded-full bg-pink-600/20 border border-pink-500/30 px-4 py-1.5 mb-6">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
+        <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 fade-in-up">
+          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-blue-50 border border-blue-100">
+            <span className="text-[11px] font-semibold tracking-wide uppercase text-blue-600">
+              Student Fundraising on Algorand
             </span>
-            <span className="text-xs font-semibold tracking-wide text-pink-300 uppercase">Student Powered Fundraising</span>
           </div>
-          
-          <h1 className="font-display text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6">
-            <span className="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-pink-300 bg-clip-text text-transparent">
-              PiggyBag
-            </span>
+
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tighter mb-4 text-gray-900 leading-[1]">
+            Fund what matters.
           </h1>
-          
-          <p className="text-xl md:text-2xl text-gray-300 mb-4 leading-relaxed">
-            Empower student dreams, one donation at a time.
-          </p>
-          <p className="text-sm md:text-base text-gray-500">
-            Built on Algorand for instant, low-fee micro-donations and transparent blockchain-verified impact.
+
+          <p className="text-lg text-gray-500 font-medium leading-relaxed max-w-xl mx-auto mb-8">
+            Create a fundraiser, launch a token, and let your community support you — all on-chain, transparent, and instant.
           </p>
 
-          {/* Stats */}
-          <div className="mt-10 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
-            <div className="bg-gradient-to-br from-pink-900/30 to-fuchsia-900/30 border border-pink-500/20 rounded-2xl p-4">
-              <div className="text-2xl md:text-3xl font-bold text-pink-400">12+</div>
-              <div className="text-xs md:text-sm text-gray-400 mt-1">Active Campaigns</div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              to="/create"
+              className="px-8 py-3 bg-gray-900 text-white font-medium rounded-full hover:bg-black transition-colors shadow-lg shadow-gray-900/20"
+            >
+              Start a Fundraiser
+            </Link>
+            <Link
+              to="/guide"
+              className="px-8 py-3 bg-white text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors border border-gray-200"
+            >
+              New to Crypto? Start Here
+            </Link>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-16">
+          <div className="text-center py-4">
+            <span className="text-2xl font-bold text-gray-900">{projectCount || '—'}</span>
+            <p className="text-xs text-gray-500 mt-1">Projects</p>
+          </div>
+          <div className="text-center py-4 border-x border-gray-200">
+            <span className="text-2xl font-bold text-gray-900">Testnet</span>
+            <p className="text-xs text-gray-500 mt-1">Network</p>
+          </div>
+          <div className="text-center py-4">
+            <span className="text-2xl font-bold text-gray-900">$0</span>
+            <p className="text-xs text-gray-500 mt-1">Fees to Donate</p>
+          </div>
+        </div>
+
+        {/* Project Feed */}
+        <div className="mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Explore Projects</h2>
+            {activeAddress && (
+              <Link
+                to="/create"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
+                + Create Project
+              </Link>
+            )}
+          </div>
+          <ProjectFeed />
+        </div>
+
+        {/* How it works */}
+        <div className="max-w-4xl mx-auto mb-16">
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">How PiggyBag Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto mb-4">
+                🐷
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">1. Create a Project</h3>
+              <p className="text-sm text-gray-500">
+                Describe your idea, set a funding goal, and launch your own token.
+              </p>
             </div>
-            <div className="bg-gradient-to-br from-pink-900/30 to-fuchsia-900/30 border border-pink-500/20 rounded-2xl p-4">
-              <div className="text-2xl md:text-3xl font-bold text-pink-400">5.2K</div>
-              <div className="text-xs md:text-sm text-gray-400 mt-1">ALGO Raised</div>
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center text-2xl mx-auto mb-4">
+                💚
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">2. Get Funded</h3>
+              <p className="text-sm text-gray-500">
+                Supporters donate ALGO and receive your project tokens in return.
+              </p>
             </div>
-            <div className="bg-gradient-to-br from-pink-900/30 to-fuchsia-900/30 border border-pink-500/20 rounded-2xl p-4">
-              <div className="text-2xl md:text-3xl font-bold text-pink-400">240+</div>
-              <div className="text-xs md:text-sm text-gray-400 mt-1">Supporters</div>
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl mx-auto mb-4">
+                🔄
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">3. Trade & Grow</h3>
+              <p className="text-sm text-gray-500">
+                Tokens are tradable on Tinyman DEX. Add liquidity, build community.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Action Cards */}
-        <div className="max-w-6xl w-full">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">Get Started</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Donate/Send Algo */}
-            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-pink-600/10 rounded-full blur-2xl group-hover:bg-pink-600/20 transition-all"></div>
-              <div className="relative">
-                <div className="text-4xl mb-3">💸</div>
-                <h3 className="text-xl font-bold text-white mb-2">Donate ALGO</h3>
-                <p className="text-gray-400 text-sm mb-4">Send instant donations to student campaigns you believe in.</p>
-                <button 
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                  disabled={!activeAddress} 
-                  onClick={() => setSendAlgoModal(true)}
-                >
-                  {activeAddress ? 'Donate Now' : 'Connect Wallet'}
-                </button>
-              </div>
-            </div>
-
-            {/* Create Campaign/Mint NFT */}
-            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-600/10 rounded-full blur-2xl group-hover:bg-fuchsia-600/20 transition-all"></div>
-              <div className="relative">
-                <div className="text-4xl mb-3">🎨</div>
-                <h3 className="text-xl font-bold text-white mb-2">Campaign NFT</h3>
-                <p className="text-gray-400 text-sm mb-4">Create unique NFT rewards for your campaign supporters.</p>
-                <button 
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                  disabled={!activeAddress} 
-                  onClick={() => setMintNftModal(true)}
-                >
-                  {activeAddress ? 'Mint NFT' : 'Connect Wallet'}
-                </button>
-              </div>
-            </div>
-
-            {/* Create Fundraiser Token */}
-            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-pink-600/10 rounded-full blur-2xl group-hover:bg-pink-600/20 transition-all"></div>
-              <div className="relative">
-                <div className="text-4xl mb-3">🪙</div>
-                <h3 className="text-xl font-bold text-white mb-2">Create Token</h3>
-                <p className="text-gray-400 text-sm mb-4">Launch a custom ASA token for your fundraising campaign.</p>
-                <button 
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                  disabled={!activeAddress} 
-                  onClick={() => setCreateAsaModal(true)}
-                >
-                  {activeAddress ? 'Create Token' : 'Connect Wallet'}
-                </button>
-              </div>
-            </div>
-
-            {/* Join Campaign/Asset Opt-In */}
-            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-600/10 rounded-full blur-2xl group-hover:bg-fuchsia-600/20 transition-all"></div>
-              <div className="relative">
-                <div className="text-4xl mb-3">✨</div>
-                <h3 className="text-xl font-bold text-white mb-2">Join Campaign</h3>
-                <p className="text-gray-400 text-sm mb-4">Opt-in to receive campaign tokens and rewards.</p>
-                <button 
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                  disabled={!activeAddress} 
-                  onClick={() => setAssetOptInModal(true)}
-                >
-                  {activeAddress ? 'Opt-In' : 'Connect Wallet'}
-                </button>
-              </div>
-            </div>
-
-            {/* Campaign Stats/Counter */}
-            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-pink-600/10 rounded-full blur-2xl group-hover:bg-pink-600/20 transition-all"></div>
-              <div className="relative">
-                <div className="text-4xl mb-3">📊</div>
-                <h3 className="text-xl font-bold text-white mb-2">Campaign Tracker</h3>
-                <p className="text-gray-400 text-sm mb-4">Track engagement and milestones on-chain.</p>
-                <button 
-                  data-test-id="appcalls-demo"
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                  disabled={!activeAddress} 
-                  onClick={toggleAppCallsModal}
-                >
-                  {activeAddress ? 'View Stats' : 'Connect Wallet'}
-                </button>
-              </div>
-            </div>
-
-            {/* Fundraising Vault/Bank */}
-            <div className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-600/10 rounded-full blur-2xl group-hover:bg-fuchsia-600/20 transition-all"></div>
-              <div className="relative">
-                <div className="text-4xl mb-3">🏦</div>
-                <h3 className="text-xl font-bold text-white mb-2">Fundraising Vault</h3>
-                <p className="text-gray-400 text-sm mb-4">Manage campaign funds with secure deposits & withdrawals.</p>
-                <button 
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                  disabled={!activeAddress} 
-                  onClick={() => setBankModal(true)}
-                >
-                  {activeAddress ? 'Open Vault' : 'Connect Wallet'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <ConnectWallet openModal={openWalletModal} closeModal={toggleWalletModal} />
-      <AppCalls openModal={appCallsDemoModal} setModalState={setAppCallsDemoModal} />
-      <SendAlgo openModal={sendAlgoModal} closeModal={() => setSendAlgoModal(false)} />
-      <MintNFT openModal={mintNftModal} closeModal={() => setMintNftModal(false)} />
-      <CreateASA openModal={createAsaModal} closeModal={() => setCreateAsaModal(false)} />
-      <AssetOptIn openModal={assetOptInModal} closeModal={() => setAssetOptInModal(false)} />
-      <Bank openModal={bankModal} closeModal={() => setBankModal(false)} />
+        {/* Footer */}
+        <footer className="border-t border-gray-200 pt-8 pb-4 text-center">
+          <p className="text-sm text-gray-400">
+            PiggyBag — Built on Algorand. Transparent. Instant.{' '}
+            <a href="https://developer.algorand.org" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+              Learn about Algorand →
+            </a>
+          </p>
+        </footer>
+      </main>
     </div>
   )
 }

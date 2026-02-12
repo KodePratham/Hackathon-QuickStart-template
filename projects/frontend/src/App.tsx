@@ -3,6 +3,9 @@ import { SnackbarProvider } from 'notistack'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './Home'
 import Profile from './pages/Profile'
+import CreateProject from './pages/CreateProject'
+import ProjectDetail from './pages/ProjectDetail'
+import Guide from './pages/Guide'
 import { AuthProvider } from './contexts/AuthContext'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
 
@@ -58,6 +61,9 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/create" element={<CreateProject />} />
+              <Route path="/project/:appId" element={<ProjectDetail />} />
+              <Route path="/guide" element={<Guide />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>
