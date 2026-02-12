@@ -1,289 +1,135 @@
-// src/components/Home.tsx
 import { useWallet } from '@txnlab/use-wallet-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import ConnectWallet from './components/ConnectWallet'
-import AppCalls from './components/AppCalls'
-import SendAlgo from './components/SendAlgo'
-import MintNFT from './components/MintNFT'
-import CreateASA from './components/CreateASA'
-import AssetOptIn from './components/AssetOptIn'
-import Bank from './components/Bank'
-import PiggyBankComponent from './components/PiggyBank'
+import Navbar from './components/Navbar'
+import ProjectFeed from './components/ProjectFeed'
+import { getAllProjects } from './utils/piggybank_supabase'
 
-interface HomeProps {}
-
-const Home: React.FC<HomeProps> = () => {
-  const [openWalletModal, setOpenWalletModal] = useState<boolean>(false)
-  const [appCallsDemoModal, setAppCallsDemoModal] = useState<boolean>(false)
-  const [sendAlgoModal, setSendAlgoModal] = useState<boolean>(false)
-  const [mintNftModal, setMintNftModal] = useState<boolean>(false)
-  const [createAsaModal, setCreateAsaModal] = useState<boolean>(false)
-  const [assetOptInModal, setAssetOptInModal] = useState<boolean>(false)
-  const [bankModal, setBankModal] = useState<boolean>(false)
-  const [piggyBankModal, setPiggyBankModal] = useState<boolean>(false)
+const Home: React.FC = () => {
   const { activeAddress } = useWallet()
+  const [projectCount, setProjectCount] = useState(0)
 
-  const toggleWalletModal = () => {
-    setOpenWalletModal(!openWalletModal)
-  }
-
-  const toggleAppCallsModal = () => {
-    setAppCallsDemoModal(!appCallsDemoModal)
-  }
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data } = await getAllProjects()
+      if (data) setProjectCount(data.length)
+    }
+    fetchStats()
+  }, [])
 
   return (
-    <div className="min-h-screen bg-white text-apple-dark font-sans selection:bg-apple-blue/20">
-      
-      {/* Navigation */}
-      <nav className="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="text-lg font-semibold tracking-tight cursor-default">PiggyBag</div>
-          <div className="flex items-center gap-4">
-            {activeAddress && (
-              <Link
-                to="/profile"
-                className="text-sm font-medium text-apple-subtext hover:text-apple-dark transition-colors"
-              >
-                Profile
-              </Link>
-            )}
-            <button
-              data-test-id="connect-wallet"
-              className={`text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-200 ${
-                activeAddress 
-                  ? 'bg-apple-gray text-apple-dark hover:bg-gray-200' 
-                  : 'bg-apple-dark text-white hover:bg-black/80 shadow-sm'
-              }`}
-              onClick={toggleWalletModal}
-            >
-              {activeAddress ? 'Connected' : 'Connect'}
-            </button>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
 
-      <main className="pt-32 pb-20 px-6 max-w-7xl mx-auto">
-        
+      <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto">
         {/* Hero Section */}
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-24 fade-in-up">
-          <div className="inline-flex items-center gap-2 mb-6 px-3 py-1 rounded-full bg-apple-gray/50 border border-gray-100">
-            <span className="text-[11px] font-semibold tracking-wide uppercase text-apple-subtext">Student Fundraising</span>
+        <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 fade-in-up">
+          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-blue-50 border border-blue-100">
+            <span className="text-[11px] font-semibold tracking-wide uppercase text-blue-600">
+              Student Fundraising on Algorand
+            </span>
           </div>
-          
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-6 text-apple-dark leading-[0.95]">
-            PiggyBag
+
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tighter mb-4 text-gray-900 leading-[1]">
+            Fund what matters.
           </h1>
-          
-          <p className="text-xl md:text-2xl text-apple-subtext font-medium leading-relaxed max-w-2xl mx-auto mb-8">
-            Empower student dreams with instant, <br className="hidden md:block" /> transparent micro-donations.
+
+          <p className="text-lg text-gray-500 font-medium leading-relaxed max-w-xl mx-auto mb-8">
+            Create a fundraiser, launch a token, and let your community support you — all on-chain, transparent, and instant.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-             {!activeAddress && (
-                <button 
-                  onClick={toggleWalletModal}
-                  className="px-8 py-3 bg-apple-blue text-white font-medium rounded-full hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20"
-                >
-                  Start Fundraising
-                </button>
-             )}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              to="/create"
+              className="px-8 py-3 bg-gray-900 text-white font-medium rounded-full hover:bg-black transition-colors shadow-lg shadow-gray-900/20"
+            >
+              Start a Fundraiser
+            </Link>
+            <Link
+              to="/guide"
+              className="px-8 py-3 bg-white text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors border border-gray-200"
+            >
+              New to Crypto? Start Here
+            </Link>
           </div>
         </div>
 
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-32">
-          <div className="flex flex-col items-center p-6 rounded-2xl bg-apple-gray/30">
-            <span className="text-3xl font-bold text-apple-dark mb-1">12+</span>
-            <span className="text-sm font-medium text-apple-subtext">Active Campaigns</span>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-16">
+          <div className="text-center py-4">
+            <span className="text-2xl font-bold text-gray-900">{projectCount || '—'}</span>
+            <p className="text-xs text-gray-500 mt-1">Projects</p>
           </div>
-          <div className="flex flex-col items-center p-6 rounded-2xl bg-apple-gray/30">
-            <span className="text-3xl font-bold text-apple-dark mb-1">5.2K</span>
-            <span className="text-sm font-medium text-apple-subtext">ALGO Raised</span>
+          <div className="text-center py-4 border-x border-gray-200">
+            <span className="text-2xl font-bold text-gray-900">Testnet</span>
+            <p className="text-xs text-gray-500 mt-1">Network</p>
           </div>
-          <div className="flex flex-col items-center p-6 rounded-2xl bg-apple-gray/30">
-            <span className="text-3xl font-bold text-apple-dark mb-1">240+</span>
-            <span className="text-sm font-medium text-apple-subtext">Supporters</span>
+          <div className="text-center py-4">
+            <span className="text-2xl font-bold text-gray-900">$0</span>
+            <p className="text-xs text-gray-500 mt-1">Fees to Donate</p>
           </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="mb-12">
-           <h2 className="text-3xl font-bold text-center mb-12 tracking-tight">Everything you need</h2>
-           
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            {/* Donate */}
-            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
-                💸
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Donate</h3>
-              <p className="text-apple-subtext leading-relaxed mb-6">
-                Support campaigns instantly with minimal fees.
-              </p>
-              <button 
-                onClick={() => setSendAlgoModal(true)}
-                className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
-                disabled={!activeAddress}
+        {/* Project Feed */}
+        <div className="mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Explore Projects</h2>
+            {activeAddress && (
+              <Link
+                to="/create"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
               >
-                {activeAddress ? 'Send Donation' : 'Connect Wallet'} 
-                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-              </button>
-            </div>
+                + Create Project
+              </Link>
+            )}
+          </div>
+          <ProjectFeed />
+        </div>
 
-            {/* Campaign NFT */}
-            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
-                🎨
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Rewards</h3>
-              <p className="text-apple-subtext leading-relaxed mb-6">
-                Create unique NFT rewards for your supporters.
-              </p>
-              <button 
-                onClick={() => setMintNftModal(true)}
-                 className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
-                disabled={!activeAddress}
-              >
-                {activeAddress ? 'Mint NFT' : 'Connect Wallet'}
-                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-              </button>
-            </div>
-
-            {/* Create Component */}
-            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
-                🪙
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Tokens</h3>
-              <p className="text-apple-subtext leading-relaxed mb-6">
-                Launch custom ASA tokens for fundraising.
-              </p>
-              <button 
-                onClick={() => setCreateAsaModal(true)}
-                 className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
-                disabled={!activeAddress}
-              >
-               {activeAddress ? 'Create Token' : 'Connect Wallet'}
-               <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-              </button>
-            </div>
-
-             {/* Opt-In */}
-            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
-                ✨
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Participate</h3>
-              <p className="text-apple-subtext leading-relaxed mb-6">
-                Opt-in to securely receive campaign assets.
-              </p>
-              <button 
-                onClick={() => setAssetOptInModal(true)}
-                 className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
-                disabled={!activeAddress}
-              >
-                {activeAddress ? 'Opt-In' : 'Connect Wallet'}
-                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-              </button>
-            </div>
-
-            {/* Stats */}
-             <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
-                📊
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Analytics</h3>
-              <p className="text-apple-subtext leading-relaxed mb-6">
-                Real-time on-chain engagement metrics.
-              </p>
-              <button 
-                onClick={toggleAppCallsModal}
-                 className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
-                disabled={!activeAddress}
-              >
-                {activeAddress ? 'View Dashboard' : 'Connect Wallet'}
-                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-              </button>
-            </div>
-
-            {/* Vault */}
-            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
-                🏦
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Vault</h3>
-              <p className="text-apple-subtext leading-relaxed mb-6">
-                Secure management of campaign funds.
-              </p>
-              <button 
-                onClick={() => setBankModal(true)}
-                 className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
-                disabled={!activeAddress}
-              >
-                {activeAddress ? 'Open Vault' : 'Connect Wallet'}
-                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-              </button>
-            </div>
-
-            {/* PiggyBank */}
-            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
+        {/* How it works */}
+        <div className="max-w-4xl mx-auto mb-16">
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">How PiggyBag Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto mb-4">
                 🐷
               </div>
-              <h3 className="text-xl font-semibold mb-2">PiggyBank</h3>
-              <p className="text-apple-subtext leading-relaxed mb-6">
-                Create a project with its own token, tradable on Tinyman.
+              <h3 className="font-semibold text-gray-900 mb-2">1. Create a Project</h3>
+              <p className="text-sm text-gray-500">
+                Describe your idea, set a funding goal, and launch your own token.
               </p>
-              <button 
-                onClick={() => setPiggyBankModal(true)}
-                className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
-                disabled={!activeAddress}
-              >
-                {activeAddress ? 'Launch PiggyBank' : 'Connect Wallet'}
-                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-              </button>
             </div>
-
-            {/* Trade on Tinyman */}
-            <div className="group p-8 rounded-[2rem] bg-white border border-gray-100 shadow-apple hover:shadow-apple-hover transition-all duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform">
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center text-2xl mx-auto mb-4">
+                💚
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">2. Get Funded</h3>
+              <p className="text-sm text-gray-500">
+                Supporters donate ALGO and receive your project tokens in return.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl mx-auto mb-4">
                 🔄
               </div>
-              <h3 className="text-xl font-semibold mb-2">Trade</h3>
-              <p className="text-apple-subtext leading-relaxed mb-6">
-                Swap tokens on Tinyman DEX (Testnet).
+              <h3 className="font-semibold text-gray-900 mb-2">3. Trade & Grow</h3>
+              <p className="text-sm text-gray-500">
+                Tokens are tradable on Tinyman DEX. Add liquidity, build community.
               </p>
-              <a 
-                href="https://testnet.tinyman.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-semibold text-apple-blue hover:text-blue-700 flex items-center gap-1 group/btn"
-              >
-                Open Tinyman
-                <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-              </a>
             </div>
-
-           </div>
+          </div>
         </div>
 
         {/* Footer */}
-        <footer className="border-t border-gray-100 pt-12 pb-6 text-center">
-            <p className="text-sm text-apple-subtext">Built on Algorand. Designed for Impact.</p>
+        <footer className="border-t border-gray-200 pt-8 pb-4 text-center">
+          <p className="text-sm text-gray-400">
+            PiggyBag — Built on Algorand. Transparent. Instant.{' '}
+            <a href="https://developer.algorand.org" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+              Learn about Algorand →
+            </a>
+          </p>
         </footer>
-
       </main>
-
-      <ConnectWallet openModal={openWalletModal} closeModal={toggleWalletModal} />
-      <AppCalls openModal={appCallsDemoModal} setModalState={setAppCallsDemoModal} />
-      <SendAlgo openModal={sendAlgoModal} closeModal={() => setSendAlgoModal(false)} />
-      <MintNFT openModal={mintNftModal} closeModal={() => setMintNftModal(false)} />
-      <CreateASA openModal={createAsaModal} closeModal={() => setCreateAsaModal(false)} />
-      <AssetOptIn openModal={assetOptInModal} closeModal={() => setAssetOptInModal(false)} />
-      <Bank openModal={bankModal} closeModal={() => setBankModal(false)} />
-      <PiggyBankComponent openModal={piggyBankModal} closeModal={() => setPiggyBankModal(false)} />
     </div>
   )
 }

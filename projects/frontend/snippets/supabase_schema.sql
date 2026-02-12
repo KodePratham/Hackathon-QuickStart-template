@@ -1,11 +1,27 @@
 -- ============================================
--- SUPABASE SQL SCHEMA FOR PIGGYBANK PROJECTS
+-- SUPABASE SQL SCHEMA FOR PIGGYBAG PLATFORM
 -- ============================================
 -- Run this in Supabase SQL Editor to create
--- the required tables for storing piggybank projects
+-- all required tables for the PiggyBag fundraiser platform
 
 -- Enable UUID extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ============================================
+-- USER PROFILES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    wallet_address TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    description TEXT DEFAULT '',
+    twitter_url TEXT DEFAULT '',
+    linkedin_url TEXT DEFAULT '',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_wallet ON user_profiles(wallet_address);
 
 -- ============================================
 -- PIGGYBANK PROJECTS TABLE
@@ -147,6 +163,13 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Trigger for auto-updating timestamp on user_profiles
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
+CREATE TRIGGER update_user_profiles_updated_at
+    BEFORE UPDATE ON user_profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- Trigger for auto-updating timestamp
 DROP TRIGGER IF EXISTS update_piggybank_projects_updated_at ON piggybank_projects;
 CREATE TRIGGER update_piggybank_projects_updated_at
@@ -159,10 +182,24 @@ CREATE TRIGGER update_piggybank_projects_updated_at
 -- ============================================
 
 -- Enable RLS
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_deposits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_withdrawals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_token_claims ENABLE ROW LEVEL SECURITY;
+
+-- User profile policies
+CREATE POLICY "Profiles are viewable by everyone"
+    ON user_profiles FOR SELECT
+    USING (true);
+
+CREATE POLICY "Anyone can create profiles"
+    ON user_profiles FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Users can update their own profiles"
+    ON user_profiles FOR UPDATE
+    USING (true);
 
 -- Policy: Anyone can read projects
 CREATE POLICY "Public projects are viewable by everyone"

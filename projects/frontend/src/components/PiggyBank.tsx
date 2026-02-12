@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useSnackbar } from 'notistack'
-import algosdk, { getApplicationAddress, makePaymentTxnWithSuggestedParamsFromObject } from 'algosdk'
-import { AlgorandClient, microAlgos } from '@algorandfoundation/algokit-utils'
+import { getApplicationAddress } from 'algosdk'
+import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { getAlgodConfigFromViteEnvironment, getIndexerConfigFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 import {
   createPiggyBankProject,
@@ -13,15 +13,19 @@ import {
   setTinymanPool,
   type PiggyBankProject,
 } from '../utils/piggybank_supabase'
+import {
+  deployAndInitializeProject,
+  depositToProject,
+  withdrawFromProject,
+  claimProjectTokens,
+  getTinymanSwapUrl,
+  getTinymanPoolUrl,
+} from '../utils/algorand'
 
 interface PiggyBankProps {
   openModal: boolean
   closeModal: () => void
 }
-
-// Tinyman Testnet App IDs
-const TINYMAN_V2_TESTNET_APP_ID = 62368684
-const TINYMAN_TESTNET_URL = 'https://testnet.tinyman.org'
 
 const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
   const { enqueueSnackbar } = useSnackbar()
@@ -31,10 +35,9 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
   const algorand = useMemo(() => AlgorandClient.fromConfig({ algodConfig, indexerConfig }), [algodConfig, indexerConfig])
 
   // State
-  const [appId, setAppId] = useState<number | ''>(0)
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'create' | 'manage' | 'trade'>('create')
-  
+
   // Project creation state
   const [projectName, setProjectName] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
@@ -42,118 +45,95 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
   const [tokenSymbol, setTokenSymbol] = useState('')
   const [tokenSupply, setTokenSupply] = useState('1000000')
   const [goalAmount, setGoalAmount] = useState('')
-  
-  // Project info state
+  const [deployStatus, setDeployStatus] = useState<'idle' | 'deploying' | 'success' | 'error'>('idle')
+  const [deployResult, setDeployResult] = useState<{ appId: number; appAddress: string; tokenId: number; txnId: string } | null>(null)
+
+  // Manage state — user enters App ID of an existing project
+  const [manageAppId, setManageAppId] = useState<number | ''>('')
   const [projectInfo, setProjectInfo] = useState<PiggyBankProject | null>(null)
   const [depositAmount, setDepositAmount] = useState('')
   const [withdrawAmount, setWithdrawAmount] = useState('')
-  const [userDeposit, setUserDeposit] = useState<number>(0)
-  const [tokenId, setTokenId] = useState<number>(0)
 
   useEffect(() => {
     algorand.setDefaultSigner(transactionSigner)
   }, [algorand, transactionSigner])
 
-  const appAddress = useMemo(() => (appId && appId > 0 ? String(getApplicationAddress(appId)) : ''), [appId])
+  const manageAppAddress = useMemo(
+    () => (manageAppId ? String(getApplicationAddress(Number(manageAppId))) : ''),
+    [manageAppId],
+  )
 
   // Fetch project info from Supabase
   const fetchProjectInfo = async () => {
-    if (!appId) return
+    if (!manageAppId) return
     try {
-      const { data } = await getProjectByAppId(Number(appId))
-      if (data) {
-        setProjectInfo(data)
-        setTokenId(data.token_id || 0)
-      }
+      const { data } = await getProjectByAppId(Number(manageAppId))
+      if (data) setProjectInfo(data)
     } catch (e) {
       console.error('Failed to fetch project info:', e)
     }
   }
 
   useEffect(() => {
-    if (appId) {
-      fetchProjectInfo()
-    }
-  }, [appId])
+    if (manageAppId) fetchProjectInfo()
+  }, [manageAppId])
 
-  // Deploy new PiggyBank contract
-  const deployContract = async () => {
+  // ─── Deploy + Initialize ────────────────────────────────────────────
+  const handleDeploy = async () => {
     if (!activeAddress) {
-      enqueueSnackbar('Please connect your wallet first', { variant: 'error' })
-      return
-    }
-    setLoading(true)
-    try {
-      //  In a real implementation, you would deploy using PiggyBankFactory
-      // For now, we'll show the steps needed
-      enqueueSnackbar('Contract deployment would happen here. Use AlgoKit CLI for actual deployment.', { variant: 'info' })
-      enqueueSnackbar('Run: algokit project deploy testnet', { variant: 'info' })
-    } catch (e) {
-      enqueueSnackbar(`Deployment failed: ${(e as Error).message}`, { variant: 'error' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Initialize project with token
-  const initializeProject = async () => {
-    if (!activeAddress || !appId) {
-      enqueueSnackbar('Connect wallet and enter App ID', { variant: 'error' })
+      enqueueSnackbar('Connect your wallet first', { variant: 'error' })
       return
     }
     if (!projectName || !tokenName || !tokenSymbol || !goalAmount) {
-      enqueueSnackbar('Please fill all required fields', { variant: 'error' })
+      enqueueSnackbar('Fill all required fields', { variant: 'error' })
       return
     }
 
+    setDeployStatus('deploying')
     setLoading(true)
     try {
-      const sp = await algorand.client.algod.getTransactionParams().do()
       const goalMicroAlgos = Math.round(parseFloat(goalAmount) * 1_000_000)
       const supplyWithDecimals = parseInt(tokenSupply) * 1_000_000 // 6 decimals
 
-      // Create MBR payment transaction
-      const mbrPayTxn = makePaymentTxnWithSuggestedParamsFromObject({
-        sender: activeAddress,
-        receiver: appAddress,
-        amount: 200_000, // 0.2 ALGO for ASA creation
-        suggestedParams: sp,
+      // 1. Deploy contract + mint token — all in-browser
+      const result = await deployAndInitializeProject(algorand, {
+        creatorAddress: activeAddress,
+        projectName,
+        tokenName,
+        tokenUnitName: tokenSymbol,
+        tokenTotalSupply: supplyWithDecimals,
+        goalAmount: goalMicroAlgos,
       })
 
-      // Here you would call the initialize_project method on the contract
-      // This is a placeholder showing the structure
-      enqueueSnackbar('Initializing project...', { variant: 'info' })
+      setDeployResult(result)
 
-      // After successful blockchain tx, save to Supabase
-      const { data, error } = await createPiggyBankProject({
-        app_id: Number(appId),
-        app_address: appAddress,
+      // 2. Save to Supabase
+      await createPiggyBankProject({
+        app_id: result.appId,
+        app_address: result.appAddress,
         name: projectName,
         description: projectDescription,
         token_name: tokenName,
         token_symbol: tokenSymbol,
+        token_id: result.tokenId,
         token_total_supply: supplyWithDecimals,
         goal_amount: goalMicroAlgos,
         creator_address: activeAddress,
       })
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      enqueueSnackbar('Project initialized successfully!', { variant: 'success' })
-      setProjectInfo(data)
-      setActiveTab('manage')
+      setDeployStatus('success')
+      enqueueSnackbar('Project deployed & token minted!', { variant: 'success' })
     } catch (e) {
-      enqueueSnackbar(`Failed to initialize: ${(e as Error).message}`, { variant: 'error' })
+      setDeployStatus('error')
+      enqueueSnackbar(`Deploy failed: ${(e as Error).message}`, { variant: 'error' })
     } finally {
       setLoading(false)
     }
   }
 
-  // Deposit ALGO
+  // ─── Deposit ────────────────────────────────────────────────────────
   const deposit = async () => {
-    if (!activeAddress || !appId) {
+    if (!activeAddress || !manageAppId) {
       enqueueSnackbar('Connect wallet and enter App ID', { variant: 'error' })
       return
     }
@@ -165,21 +145,27 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
 
     setLoading(true)
     try {
-      const sp = await algorand.client.algod.getTransactionParams().do()
+      const { totalDeposited, txnId } = await depositToProject(
+        algorand,
+        Number(manageAppId),
+        activeAddress,
+        amountAlgos,
+      )
+
       const amountMicroAlgos = Math.round(amountAlgos * 1_000_000)
+      if (projectInfo?.id) {
+        await recordDeposit({
+          project_id: projectInfo.id,
+          app_id: Number(manageAppId),
+          depositor_address: activeAddress,
+          amount: amountMicroAlgos,
+          txn_id: txnId,
+        })
+        const newTotal = (projectInfo.total_deposited || 0) + amountMicroAlgos
+        await updateProjectDeposits(Number(manageAppId), newTotal)
+      }
 
-      // Create payment transaction
-      const payTxn = makePaymentTxnWithSuggestedParamsFromObject({
-        sender: activeAddress,
-        receiver: appAddress,
-        amount: amountMicroAlgos,
-        suggestedParams: sp,
-      })
-
-      // Here you would call the deposit method on the contract
-      // and record to Supabase
-      
-      enqueueSnackbar(`Deposited ${amountAlgos} ALGO successfully!`, { variant: 'success' })
+      enqueueSnackbar(`Deposited ${amountAlgos} ALGO! Tx: ${txnId.slice(0, 8)}...`, { variant: 'success' })
       setDepositAmount('')
       fetchProjectInfo()
     } catch (e) {
@@ -189,9 +175,9 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
     }
   }
 
-  // Withdraw ALGO
+  // ─── Withdraw ───────────────────────────────────────────────────────
   const withdraw = async () => {
-    if (!activeAddress || !appId) {
+    if (!activeAddress || !manageAppId) {
       enqueueSnackbar('Connect wallet and enter App ID', { variant: 'error' })
       return
     }
@@ -203,11 +189,25 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
 
     setLoading(true)
     try {
-      const amountMicroAlgos = Math.round(amountAlgos * 1_000_000)
+      const { remaining, txnId } = await withdrawFromProject(
+        algorand,
+        Number(manageAppId),
+        activeAddress,
+        amountAlgos,
+      )
 
-      // Here you would call the withdraw method on the contract
-      
-      enqueueSnackbar(`Withdrew ${amountAlgos} ALGO successfully!`, { variant: 'success' })
+      if (projectInfo?.id) {
+        const amountMicroAlgos = Math.round(amountAlgos * 1_000_000)
+        await recordWithdrawal({
+          project_id: projectInfo.id,
+          app_id: Number(manageAppId),
+          withdrawer_address: activeAddress,
+          amount: amountMicroAlgos,
+          txn_id: txnId,
+        })
+      }
+
+      enqueueSnackbar(`Withdrew ${amountAlgos} ALGO! Tx: ${txnId.slice(0, 8)}...`, { variant: 'success' })
       setWithdrawAmount('')
       fetchProjectInfo()
     } catch (e) {
@@ -217,58 +217,25 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
     }
   }
 
-  // Claim tokens
+  // ─── Claim Tokens ───────────────────────────────────────────────────
   const claimTokens = async () => {
-    if (!activeAddress || !appId || !tokenId) {
+    if (!activeAddress || !manageAppId || !projectInfo?.token_id) {
       enqueueSnackbar('Invalid state for claiming', { variant: 'error' })
       return
     }
 
     setLoading(true)
     try {
-      // Here you would:
-      // 1. Opt-in user to the token if not already
-      // 2. Call claim_tokens on the contract
-      
-      enqueueSnackbar('Tokens claimed successfully!', { variant: 'success' })
+      const { amountClaimed, txnId } = await claimProjectTokens(
+        algorand,
+        Number(manageAppId),
+        activeAddress,
+        projectInfo.token_id,
+      )
+
+      enqueueSnackbar(`Claimed ${amountClaimed} ${projectInfo.token_symbol} tokens!`, { variant: 'success' })
     } catch (e) {
       enqueueSnackbar(`Claim failed: ${(e as Error).message}`, { variant: 'error' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Open Tinyman for trading
-  const openTinyman = () => {
-    if (!tokenId) {
-      enqueueSnackbar('Token not created yet', { variant: 'error' })
-      return
-    }
-    // Open Tinyman testnet with token pair
-    const tinymanUrl = `${TINYMAN_TESTNET_URL}/#/swap?asset_in=0&asset_out=${tokenId}`
-    window.open(tinymanUrl, '_blank')
-  }
-
-  // Create Tinyman pool (bootstrap)
-  const createTinymanPool = async () => {
-    if (!tokenId) {
-      enqueueSnackbar('Token not created yet', { variant: 'error' })
-      return
-    }
-    
-    setLoading(true)
-    try {
-      // In a real implementation, you would:
-      // 1. Call Tinyman V2 bootstrap method
-      // 2. Add initial liquidity
-      // For now, show info about manual pool creation
-      
-      const poolUrl = `${TINYMAN_TESTNET_URL}/#/pool/create?asset_1=0&asset_2=${tokenId}`
-      window.open(poolUrl, '_blank')
-      
-      enqueueSnackbar('Redirecting to Tinyman to create pool...', { variant: 'info' })
-    } catch (e) {
-      enqueueSnackbar(`Pool creation failed: ${(e as Error).message}`, { variant: 'error' })
     } finally {
       setLoading(false)
     }
@@ -290,19 +257,19 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
 
         {/* Tabs */}
         <div className="tabs tabs-boxed mb-4">
-          <button 
+          <button
             className={`tab ${activeTab === 'create' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('create')}
           >
             Create Project
           </button>
-          <button 
+          <button
             className={`tab ${activeTab === 'manage' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('manage')}
           >
             Manage
           </button>
-          <button 
+          <button
             className={`tab ${activeTab === 'trade' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('trade')}
           >
@@ -310,123 +277,168 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
           </button>
         </div>
 
-        {/* App ID Input */}
-        <div className="form-control mb-4">
-          <label className="label">
-            <span className="label-text">App ID (Contract Address)</span>
-          </label>
-          <input
-            type="number"
-            placeholder="Enter App ID after deployment"
-            className="input input-bordered w-full"
-            value={appId}
-            onChange={(e) => setAppId(e.target.value ? parseInt(e.target.value) : '')}
-          />
-          {appAddress && (
-            <label className="label">
-              <span className="label-text-alt text-xs">App Address: {appAddress.slice(0, 10)}...{appAddress.slice(-6)}</span>
-            </label>
-          )}
-        </div>
-
-        {/* Create Project Tab */}
+        {/* ─── Create Project Tab ─────────────────────────────────────── */}
         {activeTab === 'create' && (
           <div className="space-y-4">
-            <div className="alert alert-info">
-              <span>First deploy the contract using: <code>algokit project deploy testnet</code></span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="form-control">
-                <label className="label"><span className="label-text">Project Name *</span></label>
-                <input
-                  type="text"
-                  placeholder="My PiggyBank"
-                  className="input input-bordered"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                />
+            {deployStatus === 'success' && deployResult ? (
+              <div className="space-y-4">
+                <div className="alert alert-success">
+                  <span>🎉 Project deployed successfully! Token minted on-chain.</span>
+                </div>
+                <div className="bg-base-200 rounded-xl p-4 space-y-2 text-sm">
+                  <p><strong>App ID:</strong> <span className="font-mono">{deployResult.appId}</span></p>
+                  <p><strong>Token ID (ASA):</strong> <span className="font-mono">{deployResult.tokenId}</span></p>
+                  <p><strong>Contract:</strong> <span className="font-mono text-xs">{deployResult.appAddress}</span></p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <a
+                    href={getTinymanPoolUrl(deployResult.tokenId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary"
+                  >
+                    💧 Create Trading Pool on Tinyman
+                  </a>
+                  <a
+                    href={`https://testnet.algoexplorer.io/application/${deployResult.appId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline btn-sm"
+                  >
+                    View on Explorer ↗
+                  </a>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      setDeployStatus('idle')
+                      setDeployResult(null)
+                      setProjectName('')
+                      setProjectDescription('')
+                      setTokenName('')
+                      setTokenSymbol('')
+                      setGoalAmount('')
+                    }}
+                  >
+                    Create Another
+                  </button>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Project Name *</span></label>
+                    <input
+                      type="text"
+                      placeholder="My PiggyBank"
+                      className="input input-bordered"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                    />
+                  </div>
 
-              <div className="form-control">
-                <label className="label"><span className="label-text">Goal Amount (ALGO) *</span></label>
-                <input
-                  type="number"
-                  placeholder="100"
-                  className="input input-bordered"
-                  value={goalAmount}
-                  onChange={(e) => setGoalAmount(e.target.value)}
-                />
-              </div>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Goal Amount (ALGO) *</span></label>
+                    <input
+                      type="number"
+                      placeholder="100"
+                      className="input input-bordered"
+                      value={goalAmount}
+                      onChange={(e) => setGoalAmount(e.target.value)}
+                    />
+                  </div>
 
-              <div className="form-control md:col-span-2">
-                <label className="label"><span className="label-text">Description</span></label>
-                <textarea
-                  placeholder="Describe your project..."
-                  className="textarea textarea-bordered"
-                  value={projectDescription}
-                  onChange={(e) => setProjectDescription(e.target.value)}
-                />
-              </div>
+                  <div className="form-control md:col-span-2">
+                    <label className="label"><span className="label-text">Description</span></label>
+                    <textarea
+                      placeholder="Describe your project..."
+                      className="textarea textarea-bordered"
+                      value={projectDescription}
+                      onChange={(e) => setProjectDescription(e.target.value)}
+                    />
+                  </div>
 
-              <div className="form-control">
-                <label className="label"><span className="label-text">Token Name *</span></label>
-                <input
-                  type="text"
-                  placeholder="PiggyToken"
-                  className="input input-bordered"
-                  value={tokenName}
-                  onChange={(e) => setTokenName(e.target.value)}
-                />
-              </div>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Token Name *</span></label>
+                    <input
+                      type="text"
+                      placeholder="PiggyToken"
+                      className="input input-bordered"
+                      value={tokenName}
+                      onChange={(e) => setTokenName(e.target.value)}
+                    />
+                  </div>
 
-              <div className="form-control">
-                <label className="label"><span className="label-text">Token Symbol * (max 8)</span></label>
-                <input
-                  type="text"
-                  placeholder="PIGGY"
-                  className="input input-bordered"
-                  maxLength={8}
-                  value={tokenSymbol}
-                  onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
-                />
-              </div>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Token Symbol * (max 8)</span></label>
+                    <input
+                      type="text"
+                      placeholder="PIGGY"
+                      className="input input-bordered"
+                      maxLength={8}
+                      value={tokenSymbol}
+                      onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
+                    />
+                  </div>
 
-              <div className="form-control">
-                <label className="label"><span className="label-text">Token Supply</span></label>
-                <input
-                  type="number"
-                  placeholder="1000000"
-                  className="input input-bordered"
-                  value={tokenSupply}
-                  onChange={(e) => setTokenSupply(e.target.value)}
-                />
-              </div>
-            </div>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Token Supply</span></label>
+                    <input
+                      type="number"
+                      placeholder="1000000"
+                      className="input input-bordered"
+                      value={tokenSupply}
+                      onChange={(e) => setTokenSupply(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-            <div className="flex gap-2 mt-4">
-              <button
-                className="btn btn-secondary"
-                onClick={deployContract}
-                disabled={loading || !activeAddress}
-              >
-                {loading ? <span className="loading loading-spinner" /> : '1. Deploy Contract'}
-              </button>
+                <div className="bg-base-200 rounded-lg p-3 text-sm text-gray-600">
+                  <p>💡 This will deploy a smart contract and mint your project token — all from your browser. Estimated cost: ~0.5 ALGO.</p>
+                </div>
 
-              <button
-                className="btn btn-primary"
-                onClick={initializeProject}
-                disabled={loading || !activeAddress || !appId}
-              >
-                {loading ? <span className="loading loading-spinner" /> : '2. Initialize Project'}
-              </button>
-            </div>
+                <button
+                  className="btn btn-primary w-full"
+                  onClick={handleDeploy}
+                  disabled={loading || !activeAddress || deployStatus === 'deploying'}
+                >
+                  {deployStatus === 'deploying' ? (
+                    <><span className="loading loading-spinner" /> Deploying & Minting Token...</>
+                  ) : (
+                    '🚀 Deploy Project & Mint Token'
+                  )}
+                </button>
+
+                {!activeAddress && (
+                  <p className="text-xs text-center text-gray-400">Connect your wallet to deploy</p>
+                )}
+              </>
+            )}
           </div>
         )}
 
-        {/* Manage Tab */}
+        {/* ─── Manage Tab ─────────────────────────────────────────────── */}
         {activeTab === 'manage' && (
           <div className="space-y-4">
+            {/* App ID Input for managing existing projects */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">App ID (your deployed project)</span>
+              </label>
+              <input
+                type="number"
+                placeholder="Enter your project's App ID"
+                className="input input-bordered w-full"
+                value={manageAppId}
+                onChange={(e) => setManageAppId(e.target.value ? parseInt(e.target.value) : '')}
+              />
+              {manageAppAddress && (
+                <label className="label">
+                  <span className="label-text-alt text-xs">Contract: {manageAppAddress.slice(0, 10)}...{manageAppAddress.slice(-6)}</span>
+                </label>
+              )}
+            </div>
+
             {projectInfo && (
               <div className="stats shadow w-full">
                 <div className="stat">
@@ -464,7 +476,7 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
                   <button
                     className="btn btn-success"
                     onClick={deposit}
-                    disabled={loading || !activeAddress}
+                    disabled={loading || !activeAddress || !manageAppId}
                   >
                     {loading ? <span className="loading loading-spinner" /> : 'Deposit'}
                   </button>
@@ -475,7 +487,7 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
               <div className="card bg-base-200">
                 <div className="card-body">
                   <h4 className="card-title">Withdraw ALGO</h4>
-                  <p className="text-sm text-gray-500">Your deposit: {(userDeposit / 1_000_000).toFixed(4)} ALGO</p>
+                  <p className="text-sm text-gray-500">Only the project creator can withdraw</p>
                   <div className="form-control">
                     <input
                       type="number"
@@ -488,7 +500,7 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
                   <button
                     className="btn btn-warning"
                     onClick={withdraw}
-                    disabled={loading || !activeAddress}
+                    disabled={loading || !activeAddress || !manageAppId}
                   >
                     {loading ? <span className="loading loading-spinner" /> : 'Withdraw'}
                   </button>
@@ -504,7 +516,7 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
                 <button
                   className="btn btn-primary"
                   onClick={claimTokens}
-                  disabled={loading || !activeAddress || !tokenId}
+                  disabled={loading || !activeAddress || !projectInfo?.token_id}
                 >
                   {loading ? <span className="loading loading-spinner" /> : 'Claim Tokens'}
                 </button>
@@ -513,7 +525,7 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
           </div>
         )}
 
-        {/* Trade Tab - Tinyman Integration */}
+        {/* ─── Trade Tab — Tinyman Integration ────────────────────────── */}
         {activeTab === 'trade' && (
           <div className="space-y-4">
             <div className="alert">
@@ -526,15 +538,15 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
               </div>
             </div>
 
-            {tokenId > 0 && (
+            {projectInfo?.token_id && projectInfo.token_id > 0 && (
               <div className="stats shadow w-full">
                 <div className="stat">
                   <div className="stat-title">Token ID (ASA)</div>
-                  <div className="stat-value text-lg">{tokenId}</div>
+                  <div className="stat-value text-lg">{projectInfo.token_id}</div>
                 </div>
                 <div className="stat">
                   <div className="stat-title">Token</div>
-                  <div className="stat-value text-lg">{projectInfo?.token_symbol || 'N/A'}</div>
+                  <div className="stat-value text-lg">{projectInfo.token_symbol || 'N/A'}</div>
                 </div>
               </div>
             )}
@@ -544,13 +556,14 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
                 <div className="card-body">
                   <h4 className="card-title">Create Pool</h4>
                   <p>Bootstrap a new ALGO/{projectInfo?.token_symbol || 'TOKEN'} pool on Tinyman</p>
-                  <button
-                    className="btn btn-white"
-                    onClick={createTinymanPool}
-                    disabled={loading || !tokenId}
+                  <a
+                    href={projectInfo?.token_id ? getTinymanPoolUrl(projectInfo.token_id) : '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`btn btn-white ${!projectInfo?.token_id ? 'btn-disabled' : ''}`}
                   >
-                    Create Pool on Tinyman
-                  </button>
+                    Create Pool on Tinyman ↗
+                  </a>
                 </div>
               </div>
 
@@ -558,13 +571,14 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
                 <div className="card-body">
                   <h4 className="card-title">Trade</h4>
                   <p>Swap ALGO for {projectInfo?.token_symbol || 'TOKEN'} on Tinyman</p>
-                  <button
-                    className="btn btn-white"
-                    onClick={openTinyman}
-                    disabled={!tokenId}
+                  <a
+                    href={projectInfo?.token_id ? getTinymanSwapUrl(projectInfo.token_id) : '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`btn btn-white ${!projectInfo?.token_id ? 'btn-disabled' : ''}`}
                   >
                     Open Tinyman ↗
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -576,7 +590,7 @@ const PiggyBankComponent = ({ openModal, closeModal }: PiggyBankProps) => {
             )}
 
             <div className="divider">Tinyman Testnet Resources</div>
-            
+
             <div className="flex flex-wrap gap-2">
               <a href="https://testnet.tinyman.org" target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">
                 Tinyman Testnet ↗
