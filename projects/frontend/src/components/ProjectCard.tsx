@@ -31,7 +31,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
   return (
     <Link
       to={`/project/${project.app_id}`}
-      className="group block bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden"
+      className="group block bg-white rounded-2xl border border-pink-100 shadow-sm hover:shadow-lg hover:shadow-pink-100/50 transition-all duration-300 overflow-hidden"
     >
       {/* Project Image / Gradient Header */}
       <div className="h-40 relative overflow-hidden">
@@ -42,7 +42,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-pink-400 via-rose-400 to-pink-500 flex items-center justify-center">
             <span className="text-5xl">🐷</span>
           </div>
         )}
@@ -53,7 +53,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
               Goal Reached
             </span>
           ) : (
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-white/90 text-gray-700 backdrop-blur-sm">
+            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-white/95 text-pink-700 border border-pink-100 backdrop-blur-sm">
               Active
             </span>
           )}
@@ -70,7 +70,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
 
       {/* Content */}
       <div className="p-5">
-        <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
+        <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-pink-700 transition-colors line-clamp-1">
           {project.name}
         </h3>
         <p className="text-sm text-gray-500 mb-4 line-clamp-2 leading-relaxed min-h-[2.5rem]">
@@ -85,7 +85,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
           </div>
           <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -97,7 +97,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
 
         {/* Founder Info */}
         <div className="flex items-center gap-2.5 pt-3 border-t border-gray-50">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
             {founder?.name ? founder.name.charAt(0).toUpperCase() : '?'}
           </div>
           <div className="flex-1 min-w-0">
@@ -114,7 +114,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="text-gray-400 hover:text-blue-500 transition-colors"
+              className="text-gray-400 hover:text-pink-500 transition-colors"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />

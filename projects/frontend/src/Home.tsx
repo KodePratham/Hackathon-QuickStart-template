@@ -18,14 +18,14 @@ const Home: React.FC = () => {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
       <Navbar />
 
       <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 fade-in-up">
-          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-blue-50 border border-blue-100">
-            <span className="text-[11px] font-semibold tracking-wide uppercase text-blue-600">
+          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-pink-50 border border-pink-100">
+            <span className="text-[11px] font-semibold tracking-wide uppercase text-pink-600">
               Student Fundraising on Algorand
             </span>
           </div>
@@ -41,13 +41,13 @@ const Home: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               to="/create"
-              className="px-8 py-3 bg-gray-900 text-white font-medium rounded-full hover:bg-black transition-colors shadow-lg shadow-gray-900/20"
+              className="px-8 py-3 bg-pink-600 text-white font-medium rounded-full hover:bg-pink-700 transition-colors shadow-lg shadow-pink-500/25"
             >
               Start a Fundraiser
             </Link>
             <Link
               to="/guide"
-              className="px-8 py-3 bg-white text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors border border-gray-200"
+              className="px-8 py-3 bg-white text-gray-700 font-medium rounded-full hover:bg-pink-50 transition-colors border border-pink-100"
             >
               New to Crypto? Start Here
             </Link>
@@ -77,7 +77,7 @@ const Home: React.FC = () => {
             {activeAddress && (
               <Link
                 to="/create"
-                className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                className="text-sm font-medium text-pink-600 hover:text-pink-700 flex items-center gap-1"
               >
                 + Create Project
               </Link>
@@ -91,7 +91,7 @@ const Home: React.FC = () => {
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">How PiggyBag Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center text-2xl mx-auto mb-4">
                 🐷
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">1. Create a Project</h3>
@@ -100,7 +100,7 @@ const Home: React.FC = () => {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center text-2xl mx-auto mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-2xl mx-auto mb-4">
                 💚
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">2. Get Funded</h3>
@@ -109,7 +109,7 @@ const Home: React.FC = () => {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl mx-auto mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-pink-100 text-pink-700 flex items-center justify-center text-2xl mx-auto mb-4">
                 🔄
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">3. Trade & Grow</h3>
@@ -124,7 +124,7 @@ const Home: React.FC = () => {
         <footer className="border-t border-gray-200 pt-8 pb-4 text-center">
           <p className="text-sm text-gray-400">
             PiggyBag — Built on Algorand. Transparent. Instant.{' '}
-            <a href="https://developer.algorand.org" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+            <a href="https://developer.algorand.org" target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:underline">
               Learn about Algorand →
             </a>
           </p>
