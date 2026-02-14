@@ -119,7 +119,7 @@ const CreateProject = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Create a Fundraiser</h1>
           <p className="text-gray-500 mt-2">
-            Launch your project, mint a token, and let the community fund your vision — all from your browser.
+            Launch your project, mint a token, and receive on-chain support in minutes.
           </p>
         </div>
 
@@ -128,7 +128,7 @@ const CreateProject = () => {
             <div className="text-5xl mb-4">🔐</div>
             <h3 className="text-xl font-semibold mb-2">Connect Your Wallet</h3>
             <p className="text-gray-500 mb-6">You need an Algorand wallet to create a fundraiser.</p>
-            <a href="/guide" className="text-blue-600 hover:underline text-sm font-medium">
+            <a href="/guide" className="text-pink-600 hover:underline text-sm font-medium">
               New to Algorand? Read our guide →
             </a>
           </div>
@@ -147,9 +147,9 @@ const CreateProject = () => {
                   onClick={() => num < step && num < 4 && setStep(num)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     step === num
-                      ? 'bg-gray-900 text-white'
+                      ? 'bg-pink-600 text-white'
                       : step > num
-                        ? 'bg-green-100 text-green-700'
+                        ? 'bg-pink-100 text-pink-700'
                         : 'bg-gray-100 text-gray-400'
                   }`}
                 >
@@ -173,7 +173,7 @@ const CreateProject = () => {
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
                     placeholder="e.g. Student Robotics Club"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                   />
                 </div>
 
@@ -184,7 +184,7 @@ const CreateProject = () => {
                     onChange={(e) => setProjectDescription(e.target.value)}
                     placeholder="Tell people what your project is about, why it matters, and how you'll use the funds..."
                     rows={5}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400 resize-none"
                   />
                   <p className="text-xs text-gray-400 mt-1">{projectDescription.length}/1000 characters</p>
                 </div>
@@ -200,7 +200,7 @@ const CreateProject = () => {
                       onChange={(e) => setGoalAmount(e.target.value)}
                       placeholder="100"
                       min="1"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
                       ALGO
@@ -217,7 +217,7 @@ const CreateProject = () => {
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                   />
                 </div>
 
@@ -229,7 +229,7 @@ const CreateProject = () => {
                       value={websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                     />
                   </div>
                   <div>
@@ -239,7 +239,7 @@ const CreateProject = () => {
                       value={twitterUrl}
                       onChange={(e) => setTwitterUrl(e.target.value)}
                       placeholder="https://x.com/..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                     />
                   </div>
                   <div>
@@ -249,7 +249,7 @@ const CreateProject = () => {
                       value={discordUrl}
                       onChange={(e) => setDiscordUrl(e.target.value)}
                       placeholder="https://discord.gg/..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                     />
                   </div>
                 </div>
@@ -257,7 +257,7 @@ const CreateProject = () => {
                 <button
                   onClick={() => setStep(2)}
                   disabled={!projectName || !goalAmount}
-                  className="w-full py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full py-3 bg-pink-600 text-white rounded-xl font-medium hover:bg-pink-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Continue to Token Setup →
                 </button>
@@ -281,7 +281,7 @@ const CreateProject = () => {
                       value={tokenName}
                       onChange={(e) => setTokenName(e.target.value)}
                       placeholder="e.g. RoboToken"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                     />
                   </div>
                   <div>
@@ -292,7 +292,7 @@ const CreateProject = () => {
                       onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
                       placeholder="e.g. ROBO"
                       maxLength={8}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                     />
                   </div>
                 </div>
@@ -304,7 +304,7 @@ const CreateProject = () => {
                     value={tokenSupply}
                     onChange={(e) => setTokenSupply(e.target.value)}
                     placeholder="1000000"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                   />
                   <p className="text-xs text-gray-400 mt-1">Tokens have 6 decimals. 1,000,000 = 1M tokens.</p>
                 </div>
@@ -320,9 +320,9 @@ const CreateProject = () => {
                 </div>
 
                 {/* Liquidity info */}
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                  <h4 className="text-sm font-semibold text-blue-800 mb-1">💧 Token Trading on Tinyman</h4>
-                  <p className="text-xs text-blue-700 leading-relaxed">
+                <div className="bg-pink-50 rounded-xl p-4 border border-pink-100">
+                  <h4 className="text-sm font-semibold text-pink-800 mb-1">💧 Token Trading on Tinyman</h4>
+                  <p className="text-xs text-pink-700 leading-relaxed">
                     After launching, you can create a trading pool on{' '}
                     <a
                       href="https://testnet.tinyman.org"
@@ -346,7 +346,7 @@ const CreateProject = () => {
                   <button
                     onClick={() => setStep(3)}
                     disabled={!tokenName || !tokenSymbol}
-                    className="flex-1 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 bg-pink-600 text-white rounded-xl font-medium hover:bg-pink-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Review & Launch →
                   </button>
@@ -400,9 +400,9 @@ const CreateProject = () => {
 
                 {/* Deploy status */}
                 {deployStatus && (
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 flex items-center gap-3">
-                    <div className="w-5 h-5 border-2 border-blue-400/30 border-t-blue-600 rounded-full animate-spin flex-shrink-0" />
-                    <p className="text-sm text-blue-800 font-medium">{deployStatus}</p>
+                  <div className="bg-pink-50 rounded-xl p-4 border border-pink-100 flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-pink-300/40 border-t-pink-600 rounded-full animate-spin flex-shrink-0" />
+                    <p className="text-sm text-pink-800 font-medium">{deployStatus}</p>
                   </div>
                 )}
 
@@ -417,7 +417,7 @@ const CreateProject = () => {
                   <button
                     onClick={handleDeploy}
                     disabled={loading}
-                    className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 py-3 bg-pink-600 text-white rounded-xl font-medium hover:bg-pink-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>
@@ -465,7 +465,7 @@ const CreateProject = () => {
                 <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                   <button
                     onClick={() => navigate(`/project/${deployResult.appId}`)}
-                    className="flex-1 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors"
+                    className="flex-1 py-3 bg-pink-600 text-white rounded-xl font-medium hover:bg-pink-700 transition-colors"
                   >
                     View Project →
                   </button>
@@ -474,7 +474,7 @@ const CreateProject = () => {
                       href={getTinymanPoolUrl(deployResult.tokenId)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors text-center"
+                      className="flex-1 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors text-center"
                     >
                       💧 Create Trading Pool
                     </a>
@@ -483,9 +483,9 @@ const CreateProject = () => {
 
                 {/* Tinyman explainer */}
                 {deployResult.tokenId > 0 && (
-                  <div className="bg-purple-50 rounded-xl p-4 border border-purple-100 text-left max-w-md mx-auto">
-                    <h4 className="text-sm font-semibold text-purple-800 mb-1">Make your token tradeable</h4>
-                    <p className="text-xs text-purple-700 leading-relaxed">
+                  <div className="bg-pink-50 rounded-xl p-4 border border-pink-100 text-left max-w-md mx-auto">
+                    <h4 className="text-sm font-semibold text-pink-800 mb-1">Make your token tradeable</h4>
+                    <p className="text-xs text-pink-700 leading-relaxed">
                       Create a pool on Tinyman DEX to let anyone buy/sell your ${tokenSymbol} token.
                       You&apos;ll provide some ALGO + tokens as initial liquidity. Click the button above
                       to get started on Tinyman.
@@ -499,7 +499,7 @@ const CreateProject = () => {
                     href={`https://testnet.algoexplorer.io/application/${deployResult.appId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-pink-600 hover:underline"
                   >
                     View on Explorer ↗
                   </a>
@@ -508,7 +508,7 @@ const CreateProject = () => {
                     href={`https://testnet.algoexplorer.io/asset/${deployResult.tokenId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-pink-600 hover:underline"
                   >
                     View Token ↗
                   </a>
@@ -517,7 +517,7 @@ const CreateProject = () => {
                     href={`https://testnet.algoexplorer.io/tx/${deployResult.txnId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-pink-600 hover:underline"
                   >
                     View Transaction ↗
                   </a>

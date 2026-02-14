@@ -170,7 +170,7 @@ const ProjectDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
         <Navbar />
         <main className="pt-24 pb-16 px-6 max-w-5xl mx-auto">
           <div className="animate-pulse space-y-6">
@@ -186,20 +186,20 @@ const ProjectDetail = () => {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
         <Navbar />
         <main className="pt-24 pb-16 px-6 max-w-5xl mx-auto text-center">
           <div className="text-6xl mb-4">🔍</div>
           <h2 className="text-2xl font-bold mb-2">Project Not Found</h2>
           <p className="text-gray-500 mb-6">This project doesn't exist or has been removed.</p>
-          <Link to="/" className="text-blue-600 hover:underline font-medium">← Back to Explore</Link>
+          <Link to="/" className="text-pink-600 hover:underline font-medium">← Back to Explore</Link>
         </main>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
       <Navbar />
 
       <main className="pt-24 pb-16 px-6 max-w-5xl mx-auto">
@@ -218,7 +218,7 @@ const ProjectDetail = () => {
               {project.image_url ? (
                 <img src={project.image_url} alt={project.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-pink-400 via-rose-400 to-pink-500 flex items-center justify-center">
                   <span className="text-7xl">🐷</span>
                 </div>
               )}
@@ -229,7 +229,7 @@ const ProjectDetail = () => {
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
                 {project.token_symbol && (
-                  <span className="px-3 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-700">
+                  <span className="px-3 py-1 text-xs font-bold rounded-full bg-pink-100 text-pink-700">
                     ${project.token_symbol}
                   </span>
                 )}
@@ -243,17 +243,17 @@ const ProjectDetail = () => {
             {(project.website_url || project.twitter_url || project.discord_url) && (
               <div className="flex flex-wrap gap-3">
                 {project.website_url && (
-                  <a href={project.website_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                  <a href={project.website_url} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:underline flex items-center gap-1">
                     🌐 Website
                   </a>
                 )}
                 {project.twitter_url && (
-                  <a href={project.twitter_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                  <a href={project.twitter_url} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:underline flex items-center gap-1">
                     🐦 Twitter
                   </a>
                 )}
                 {project.discord_url && (
-                  <a href={project.discord_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                  <a href={project.discord_url} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:underline flex items-center gap-1">
                     💬 Discord
                   </a>
                 )}
@@ -261,10 +261,10 @@ const ProjectDetail = () => {
             )}
 
             {/* Founder Card */}
-            <div className="bg-white rounded-xl border border-gray-100 p-5">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Created by</h3>
+            <div className="bg-white rounded-xl border border-pink-100 p-5">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Founder Profile</h3>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white font-bold text-lg">
                   {founder?.name ? founder.name.charAt(0).toUpperCase() : '?'}
                 </div>
                 <div className="flex-1">
@@ -276,12 +276,12 @@ const ProjectDetail = () => {
                 </div>
                 <div className="flex gap-2">
                   {founder?.twitter_url && (
-                    <a href={founder.twitter_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500">
+                    <a href={founder.twitter_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
                     </a>
                   )}
                   {founder?.linkedin_url && (
-                    <a href={founder.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600">
+                    <a href={founder.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
                     </a>
                   )}
@@ -290,7 +290,7 @@ const ProjectDetail = () => {
             </div>
 
             {/* Recent Supporters */}
-            <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="bg-white rounded-xl border border-pink-100 p-5">
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 Recent Supporters ({deposits.length})
               </h3>
@@ -316,7 +316,7 @@ const ProjectDetail = () => {
           {/* Right: Action Panel */}
           <div className="space-y-6">
             {/* Progress Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 sticky top-24">
+            <div className="bg-white rounded-2xl border border-pink-100 p-6 sticky top-24">
               <div className="mb-4">
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="text-3xl font-bold text-gray-900">
@@ -332,7 +332,7 @@ const ProjectDetail = () => {
               {/* Progress bar */}
               <div className="w-full bg-gray-100 rounded-full h-3 mb-4 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-700"
+                  className="h-full rounded-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all duration-700"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -349,7 +349,7 @@ const ProjectDetail = () => {
                     placeholder="0.00"
                     min="0.1"
                     step="0.1"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">ALGO</span>
                 </div>
@@ -370,7 +370,7 @@ const ProjectDetail = () => {
                 <button
                   onClick={handleDeposit}
                   disabled={actionLoading || !activeAddress}
-                  className="w-full py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-pink-600 text-white rounded-xl font-medium hover:bg-pink-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
                 >
                   {actionLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -421,7 +421,7 @@ const ProjectDetail = () => {
                   href={getTinymanSwapUrl(project.token_id)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-2.5 text-center bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors"
+                  className="block w-full py-2.5 text-center bg-pink-600 text-white rounded-xl text-sm font-medium hover:bg-pink-700 transition-colors"
                 >
                   🔄 Trade on Tinyman
                 </a>
@@ -445,7 +445,7 @@ const ProjectDetail = () => {
                 href={`https://testnet.algoexplorer.io/application/${project.app_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
+                className="text-pink-600 hover:underline"
               >
                 View on Explorer →
               </a>
