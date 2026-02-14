@@ -6,6 +6,7 @@ import Profile from './pages/Profile'
 import CreateProject from './pages/CreateProject'
 import ProjectDetail from './pages/ProjectDetail'
 import Guide from './pages/Guide'
+import TinymanGuide from './pages/TinymanGuide'
 import { AuthProvider } from './contexts/AuthContext'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
 
@@ -64,6 +65,7 @@ export default function App() {
               <Route path="/create" element={<CreateProject />} />
               <Route path="/project/:appId" element={<ProjectDetail />} />
               <Route path="/guide" element={<Guide />} />
+              <Route path="/tinyman-guide" element={<TinymanGuide />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>

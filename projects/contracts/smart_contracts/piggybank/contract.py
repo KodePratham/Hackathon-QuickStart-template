@@ -89,10 +89,10 @@ class PiggyBank(ARC4Contract):
                 unit_name=token_symbol,
                 asset_name=token_name,
                 url="ipfs://",
-                manager=Global.current_application_address,
-                reserve=Global.current_application_address,
-                freeze=Global.current_application_address,
-                clawback=Global.current_application_address,
+                manager=Txn.sender,
+                reserve=Txn.sender,
+                freeze=Txn.sender,
+                clawback=Txn.sender,
                 fee=0,
             )
             .submit()
@@ -170,12 +170,14 @@ class PiggyBank(ARC4Contract):
         assert self.is_active == Bytes(b"\x01"), "Project not active"
         assert self.token_id > 0, "Token not created yet"
         
-        current_deposit, exists = self.deposits.maybe(Txn.sender)
-        assert exists, "No deposits found for this account"
-        assert current_deposit > 0, "No deposits to claim tokens for"
-        
-        # Simple token distribution: 1 token per 1000 microAlgos deposited
-        max_claimable = current_deposit // 1000
+        max_claimable = self.token_total_supply
+        if Txn.sender != self.creator:
+            current_deposit, exists = self.deposits.maybe(Txn.sender)
+            assert exists, "No deposits found for this account"
+            assert current_deposit > 0, "No deposits to claim tokens for"
+
+            # Simple token distribution: 1 token per 1000 microAlgos deposited
+            max_claimable = current_deposit // 1000
         assert token_amount <= max_claimable, "Claiming more than allowed"
         
         # Transfer tokens to sender
