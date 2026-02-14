@@ -73,6 +73,7 @@ const CreateProject = () => {
         tokenSymbol,
         tokenSupply: parseInt(tokenSupply),
         goalAlgos: parseFloat(goalAmount),
+        tokenImageUrl: imageUrl || undefined,
       })
 
       setDeployResult(result)

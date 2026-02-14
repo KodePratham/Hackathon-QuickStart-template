@@ -47,6 +47,14 @@ const Navbar = () => {
             >
               Guide
             </Link>
+            <Link
+              to="/tinyman-guide"
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                isActive('/tinyman-guide') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-pink-700'
+              }`}
+            >
+              Tinyman
+            </Link>
           </div>
 
           {/* Right side */}
@@ -102,6 +110,14 @@ const Navbar = () => {
             }`}
           >
             Guide
+          </Link>
+          <Link
+            to="/tinyman-guide"
+            className={`flex-1 text-center px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              isActive('/tinyman-guide') ? 'bg-pink-50 text-pink-700' : 'text-gray-500'
+            }`}
+          >
+            Tinyman
           </Link>
           {activeAddress && (
             <Link

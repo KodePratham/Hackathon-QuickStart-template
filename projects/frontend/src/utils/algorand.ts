@@ -38,6 +38,7 @@ export interface CreateProjectParams {
   tokenSymbol: string
   tokenSupply: number // whole tokens (will be multiplied by 1e6 for 6 decimals)
   goalAlgos: number   // in ALGO (will be multiplied by 1e6 for microAlgos)
+  tokenImageUrl?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +69,7 @@ export async function deployAndInitializeProject(
     tokenSymbol,
     tokenSupply,
     goalAlgos,
+    tokenImageUrl,
   } = params
 
   // Make sure the signer is set
@@ -113,10 +115,43 @@ export async function deployAndInitializeProject(
       mbrPay: mbrPayTxn,
     },
     populateAppCallResources: true,
-    extraFee: microAlgos(1000),
+    extraFee: microAlgos(2000),
   })
 
   const tokenId = Number(initResult.return ?? 0)
+
+  if (tokenId <= 0) {
+    throw new Error('Token creation failed: token ID was not returned by initialize_project')
+  }
+
+  try {
+    await algorand.client.algod.accountAssetInformation(senderAddress, tokenId).do()
+  } catch {
+    await algorand.send.assetTransfer({
+      sender: senderAddress,
+      receiver: senderAddress,
+      assetId: BigInt(tokenId),
+      amount: BigInt(0),
+    })
+  }
+
+  await appClient.send.claimTokens({
+    args: { tokenAmount: supplyWithDecimals },
+    populateAppCallResources: true,
+    extraFee: microAlgos(1000),
+  })
+
+  if (tokenImageUrl && tokenImageUrl.length <= 96) {
+    await algorand.send.assetConfig({
+      sender: senderAddress,
+      assetId: BigInt(tokenId),
+      manager: senderAddress,
+      reserve: senderAddress,
+      freeze: senderAddress,
+      clawback: senderAddress,
+      url: tokenImageUrl,
+    })
+  }
 
   return {
     appId,
@@ -257,14 +292,17 @@ export async function createStandaloneASA(
   tokenSymbol: string,
   totalSupply: number,
   decimals: number = 6,
+  assetUrl?: string,
 ) {
+  const safeAssetUrl = assetUrl && assetUrl.length <= 96 ? assetUrl : 'ipfs://'
+
   const result = await algorand.send.assetCreate({
     sender: senderAddress,
     total: BigInt(totalSupply * Math.pow(10, decimals)),
     decimals,
     assetName: tokenName,
     unitName: tokenSymbol,
-    url: 'ipfs://',
+    url: safeAssetUrl,
     manager: senderAddress,
     reserve: senderAddress,
     freeze: senderAddress,
