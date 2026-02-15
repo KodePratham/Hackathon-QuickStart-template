@@ -42,7 +42,7 @@ const PublicProfile = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
         <Navbar />
-        <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto">
+        <main className="pt-32 md:pt-24 pb-16 px-6 max-w-7xl mx-auto">
           <div className="bg-white rounded-2xl border border-pink-100 p-8 text-center">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-500 mx-auto mb-3"></div>
             <p className="text-gray-500">Loading profile...</p>
@@ -56,7 +56,7 @@ const PublicProfile = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
         <Navbar />
-        <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto text-center">
+        <main className="pt-32 md:pt-24 pb-16 px-6 max-w-7xl mx-auto text-center">
           <p className="text-gray-500">Invalid profile URL.</p>
         </main>
       </div>
@@ -67,7 +67,7 @@ const PublicProfile = () => {
     <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
       <Navbar />
 
-      <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto space-y-8">
+      <main className="pt-32 md:pt-24 pb-16 px-6 max-w-7xl mx-auto space-y-8">
         <section className="bg-white rounded-2xl border border-pink-100 p-6 md:p-8">
           <div className="flex items-start gap-4">
             {profile?.avatar_url ? (
