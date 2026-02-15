@@ -24,19 +24,9 @@ const Home: React.FC = () => {
       <main className="pt-32 md:pt-24 pb-16 px-6 max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 fade-in-up">
-          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-pink-50 border border-pink-100">
-            <span className="text-[11px] font-semibold tracking-wide uppercase text-pink-600">
-              Student Fundraising on Algorand
-            </span>
-          </div>
-
           <h1 className="text-5xl md:text-6xl font-bold tracking-tighter mb-4 text-gray-900 leading-[1]">
-            Fund what matters.
+            Lack of funding should not be the reason why a project does not take off
           </h1>
-
-          <p className="text-lg text-gray-500 font-medium leading-relaxed max-w-xl mx-auto mb-8">
-            Create a fundraiser, launch a token, and let your community support you — all on-chain, transparent, and instant.
-          </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Link

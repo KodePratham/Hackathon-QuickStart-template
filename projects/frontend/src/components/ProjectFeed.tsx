@@ -15,6 +15,9 @@ const ProjectFeed = () => {
   const [activeTab, setActiveTab] = useState<FeedTab>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<PiggyBankProject[] | null>(null)
+  const [requireTwitterVerification, setRequireTwitterVerification] = useState(false)
+  const [requireDiscordServer, setRequireDiscordServer] = useState(false)
+  const [requireDonors, setRequireDonors] = useState(false)
 
   const fetchProjects = async (tab: FeedTab) => {
     setLoading(true)
@@ -73,7 +76,13 @@ const ProjectFeed = () => {
     return () => clearTimeout(debounce)
   }, [searchQuery])
 
-  const displayProjects = searchResults !== null ? searchResults : projects
+  const baseProjects = searchResults !== null ? searchResults : projects
+  const displayProjects = baseProjects.filter((project) => {
+    if (requireTwitterVerification && !project.tweet_post_url?.trim()) return false
+    if (requireDiscordServer && !project.discord_url?.trim()) return false
+    if (requireDonors && (project.total_deposited || 0) <= 0) return false
+    return true
+  })
 
   return (
     <div>
@@ -114,6 +123,43 @@ const ProjectFeed = () => {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Filter:</span>
+        <button
+          type="button"
+          onClick={() => setRequireTwitterVerification((prev) => !prev)}
+          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+            requireTwitterVerification
+              ? 'bg-pink-600 text-white border-pink-600'
+              : 'bg-white text-gray-600 border-pink-100 hover:border-pink-300'
+          }`}
+        >
+          Twitter verification link
+        </button>
+        <button
+          type="button"
+          onClick={() => setRequireDiscordServer((prev) => !prev)}
+          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+            requireDiscordServer
+              ? 'bg-pink-600 text-white border-pink-600'
+              : 'bg-white text-gray-600 border-pink-100 hover:border-pink-300'
+          }`}
+        >
+          Discord server link
+        </button>
+        <button
+          type="button"
+          onClick={() => setRequireDonors((prev) => !prev)}
+          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+            requireDonors
+              ? 'bg-pink-600 text-white border-pink-600'
+              : 'bg-white text-gray-600 border-pink-100 hover:border-pink-300'
+          }`}
+        >
+          Donors
+        </button>
+      </div>
+
       {/* Results count */}
       {searchQuery && searchResults !== null && (
         <p className="text-sm text-gray-500 mb-4">
@@ -149,7 +195,7 @@ const ProjectFeed = () => {
           </h3>
           <p className="text-gray-500 max-w-sm mx-auto">
             {searchQuery
-              ? `No projects match "${searchQuery}". Try a different search.`
+              ? `No projects match "${searchQuery}" with the selected filters.`
               : 'Be the first to create a fundraiser and bring your idea to life on Algorand!'}
           </p>
         </div>
