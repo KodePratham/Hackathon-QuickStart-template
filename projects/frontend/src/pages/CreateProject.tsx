@@ -403,6 +403,7 @@ const CreateProject = () => {
                           type="text"
                           value={tokenName}
                           onChange={(e) => setTokenName(e.target.value)}
+                          maxLength={32}
                           placeholder="e.g. RoboToken"
                           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
                         />

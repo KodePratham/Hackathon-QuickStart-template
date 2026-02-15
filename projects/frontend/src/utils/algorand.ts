@@ -60,6 +60,8 @@ export interface CreateProjectParams {
 export async function deployAndInitializeProject(
   params: CreateProjectParams,
 ): Promise<DeployAndInitResult> {
+  const utf8 = new TextEncoder()
+
   const {
     algorand,
     senderAddress,
@@ -99,6 +101,19 @@ export async function deployAndInitializeProject(
   // --- Step 3: Initialize project (mints the ASA) ---
   const goalMicroAlgos = Math.round(goalAlgos * 1_000_000)
   const supplyWithDecimals = tokenSupply * 1_000_000 // 6 decimals
+
+  if (tokenEnabled) {
+    const tokenNameBytes = utf8.encode(tokenName).length
+    const tokenSymbolBytes = utf8.encode(tokenSymbol).length
+
+    if (tokenNameBytes === 0 || tokenNameBytes > 32) {
+      throw new Error('Token name must be between 1 and 32 bytes')
+    }
+
+    if (tokenSymbolBytes === 0 || tokenSymbolBytes > 8) {
+      throw new Error('Token symbol must be between 1 and 8 bytes')
+    }
+  }
 
   const mbrPayTxn = await algorand.createTransaction.payment({
     sender: senderAddress,

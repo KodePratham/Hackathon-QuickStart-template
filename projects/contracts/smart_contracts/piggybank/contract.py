@@ -85,6 +85,11 @@ class PiggyBank(ARC4Contract):
         self.token_enabled = UInt64(1) if token_enabled else UInt64(0)
         
         if token_enabled:
+            assert token_name.bytes.length > 0, "Token name is required"
+            assert token_name.bytes.length <= 32, "Token name must be <= 32 bytes"
+            assert token_symbol.bytes.length > 0, "Token symbol is required"
+            assert token_symbol.bytes.length <= 8, "Token symbol must be <= 8 bytes"
+
             self.token_name = token_name
             self.token_symbol = token_symbol
             self.token_total_supply = token_supply
