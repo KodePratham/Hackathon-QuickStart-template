@@ -19,6 +19,7 @@ class PiggyBank(ARC4Contract):
     token_name: String
     token_symbol: String
     token_total_supply: UInt64
+    token_enabled: UInt64
     goal_amount: UInt64
     total_deposited: UInt64
     creator: Account
@@ -33,6 +34,7 @@ class PiggyBank(ARC4Contract):
         self.token_name = String("")
         self.token_symbol = String("")
         self.token_total_supply = UInt64(0)
+        self.token_enabled = UInt64(0)
         self.goal_amount = UInt64(0)
         self.total_deposited = UInt64(0)
         self.creator = Global.zero_address
@@ -46,6 +48,7 @@ class PiggyBank(ARC4Contract):
         token_name: String,
         token_symbol: String,
         token_supply: UInt64,
+        token_enabled: bool,
         goal: UInt64,
         mbr_pay: gtxn.PaymentTransaction,
     ) -> UInt64:
@@ -58,6 +61,7 @@ class PiggyBank(ARC4Contract):
             token_name: Name of the project token
             token_symbol: Symbol of the project token (max 8 chars)
             token_supply: Total supply of tokens to mint
+            token_enabled: Whether to create a token for this project
             goal: Goal amount in microAlgos
             mbr_pay: Payment for minimum balance requirement
         
@@ -69,36 +73,44 @@ class PiggyBank(ARC4Contract):
         
         # Validate MBR payment
         assert mbr_pay.receiver == Global.current_application_address, "Payment must be to contract"
-        assert mbr_pay.amount >= 200000, "Insufficient MBR payment"  # 0.2 ALGO for ASA creation
+        if token_enabled:
+            assert mbr_pay.amount >= 200000, "Insufficient MBR payment"  # 0.2 ALGO for ASA creation
         
         # Set project details
         self.project_name = name
         self.project_description = description
-        self.token_name = token_name
-        self.token_symbol = token_symbol
-        self.token_total_supply = token_supply
         self.goal_amount = goal
         self.creator = Txn.sender
         self.is_active = Bytes(b"\x01")
+        self.token_enabled = UInt64(1) if token_enabled else UInt64(0)
         
-        # Create the project token (ASA)
-        token = (
-            itxn.AssetConfig(
-                total=token_supply,
-                decimals=6,
-                unit_name=token_symbol,
-                asset_name=token_name,
-                url="ipfs://",
-                manager=Txn.sender,
-                reserve=Txn.sender,
-                freeze=Txn.sender,
-                clawback=Txn.sender,
-                fee=0,
+        if token_enabled:
+            self.token_name = token_name
+            self.token_symbol = token_symbol
+            self.token_total_supply = token_supply
+
+            token = (
+                itxn.AssetConfig(
+                    total=token_supply,
+                    decimals=6,
+                    unit_name=token_symbol,
+                    asset_name=token_name,
+                    url="ipfs://",
+                    manager=Txn.sender,
+                    reserve=Txn.sender,
+                    freeze=Txn.sender,
+                    clawback=Txn.sender,
+                    fee=0,
+                )
+                .submit()
             )
-            .submit()
-        )
-        
-        self.token_id = token.created_asset.id
+
+            self.token_id = token.created_asset.id
+        else:
+            self.token_name = String("")
+            self.token_symbol = String("")
+            self.token_total_supply = UInt64(0)
+            self.token_id = UInt64(0)
         
         return self.token_id
 
@@ -168,6 +180,7 @@ class PiggyBank(ARC4Contract):
             Amount of tokens transferred
         """
         assert self.is_active == Bytes(b"\x01"), "Project not active"
+        assert self.token_enabled == UInt64(1), "Token is disabled for this project"
         assert self.token_id > 0, "Token not created yet"
         
         max_claimable = self.token_total_supply
@@ -205,6 +218,7 @@ class PiggyBank(ARC4Contract):
         """
         assert mbr_pay.receiver == Global.current_application_address, "Payment must be to contract"
         assert mbr_pay.amount >= 100000, "Insufficient MBR payment"
+        assert self.token_enabled == UInt64(1), "Token is disabled for this project"
         assert asset.id == self.token_id, "Invalid token"
         
         return True

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useSnackbar } from 'notistack'
 import { getApplicationAddress } from 'algosdk'
-import { AlgorandClient } from '@algorandfoundation/algokit-utils'
+import { AlgorandClient, microAlgos } from '@algorandfoundation/algokit-utils'
 import { getAlgodConfigFromViteEnvironment, getIndexerConfigFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 import {
   getProjectByAppId,
@@ -11,14 +11,21 @@ import {
   recordWithdrawal,
   updateProjectDeposits,
   getProjectDeposits,
+  getProjectDonors,
+  upsertProjectDonor,
+  createProjectReward,
+  getProjectRewards,
+  recordRewardDistribution,
+  markRewardDistributed,
   PiggyBankProject,
   PiggyBankDeposit,
+  PiggyBankDonor,
+  PiggyBankReward,
 } from '../utils/piggybank_supabase'
 import { getUserProfile, UserProfile } from '../utils/supabase'
 import {
   depositToProject,
   withdrawFromProject,
-  claimProjectTokens,
   getTinymanSwapUrl,
   getTinymanPoolUrl,
 } from '../utils/algorand'
@@ -40,6 +47,12 @@ const ProjectDetail = () => {
   const [depositAmount, setDepositAmount] = useState('')
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  const [donors, setDonors] = useState<PiggyBankDonor[]>([])
+  const [rewards, setRewards] = useState<PiggyBankReward[]>([])
+  const [rewardTitle, setRewardTitle] = useState('')
+  const [rewardDescription, setRewardDescription] = useState('')
+  const [rewardPoolAlgo, setRewardPoolAlgo] = useState('')
+  const [distributingRewardId, setDistributingRewardId] = useState<string | null>(null)
 
   useEffect(() => {
     algorand.setDefaultSigner(transactionSigner)
@@ -49,6 +62,8 @@ const ProjectDetail = () => {
     () => (appId ? String(getApplicationAddress(parseInt(appId))) : ''),
     [appId]
   )
+
+  const isCreator = Boolean(activeAddress && project && activeAddress === project.creator_address)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -75,6 +90,26 @@ const ProjectDetail = () => {
     }
     fetchAll()
   }, [appId])
+
+  useEffect(() => {
+    const fetchCreatorData = async () => {
+      if (!project?.id || !isCreator) {
+        setDonors([])
+        setRewards([])
+        return
+      }
+
+      const [{ data: donorData }, { data: rewardData }] = await Promise.all([
+        getProjectDonors(project.id),
+        getProjectRewards(project.id),
+      ])
+
+      setDonors(donorData || [])
+      setRewards(rewardData || [])
+    }
+
+    fetchCreatorData()
+  }, [project?.id, isCreator])
 
   const progress = project && project.goal_amount > 0
     ? Math.min(100, ((project.total_deposited || 0) / project.goal_amount) * 100)
@@ -114,15 +149,124 @@ const ProjectDetail = () => {
         amount: amountMicroAlgos,
         txn_id: txnId,
       })
+      await upsertProjectDonor(project.id!, activeAddress, amountMicroAlgos)
       await updateProjectDeposits(parseInt(appId), newTotal)
 
       setProject({ ...project, total_deposited: newTotal })
       enqueueSnackbar(`Donated ${amt} ALGO! 🎉`, { variant: 'success' })
       setDepositAmount('')
+
+      if (isCreator && project.id) {
+        const { data: donorData } = await getProjectDonors(project.id)
+        setDonors(donorData || [])
+      }
     } catch (e) {
       enqueueSnackbar(`Deposit failed: ${(e as Error).message}`, { variant: 'error' })
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  const handleCreateReward = async () => {
+    if (!activeAddress || !project?.id || !isCreator) {
+      enqueueSnackbar('Only the project creator can create rewards', { variant: 'error' })
+      return
+    }
+
+    const rewardPool = parseFloat(rewardPoolAlgo)
+    if (!rewardTitle.trim() || !rewardPool || rewardPool <= 0) {
+      enqueueSnackbar('Enter reward title and valid ALGO amount', { variant: 'error' })
+      return
+    }
+
+    const rewardPoolMicro = Math.round(rewardPool * 1_000_000)
+    const { error } = await createProjectReward({
+      project_id: project.id,
+      title: rewardTitle.trim(),
+      description: rewardDescription.trim() || undefined,
+      reward_pool_amount: rewardPoolMicro,
+      created_by_address: activeAddress,
+    })
+
+    if (error) {
+      enqueueSnackbar(`Failed to create reward: ${error.message}`, { variant: 'error' })
+      return
+    }
+
+    const { data: rewardData } = await getProjectRewards(project.id)
+    setRewards(rewardData || [])
+    setRewardTitle('')
+    setRewardDescription('')
+    setRewardPoolAlgo('')
+    enqueueSnackbar('Reward created. You can distribute it now.', { variant: 'success' })
+  }
+
+  const handleDistributeReward = async (reward: PiggyBankReward) => {
+    if (!activeAddress || !project?.id || !isCreator || !reward.id) {
+      enqueueSnackbar('Only the project creator can distribute rewards', { variant: 'error' })
+      return
+    }
+
+    const eligibleDonors = donors.filter((donor) => donor.total_donated > 0)
+    if (eligibleDonors.length === 0) {
+      enqueueSnackbar('No donors found to distribute rewards', { variant: 'error' })
+      return
+    }
+
+    const totalDonated = eligibleDonors.reduce((sum, donor) => sum + donor.total_donated, 0)
+    if (totalDonated <= 0) {
+      enqueueSnackbar('Donor totals are invalid for distribution', { variant: 'error' })
+      return
+    }
+
+    const allocations = eligibleDonors.map((donor) => ({
+      donor,
+      amount: Math.floor((reward.reward_pool_amount * donor.total_donated) / totalDonated),
+    }))
+
+    let allocated = allocations.reduce((sum, item) => sum + item.amount, 0)
+    const remainder = reward.reward_pool_amount - allocated
+    if (remainder > 0) {
+      allocations[0].amount += remainder
+      allocated += remainder
+    }
+
+    const payouts = allocations.filter((item) => item.amount > 0)
+    if (payouts.length === 0) {
+      enqueueSnackbar('No positive payout could be computed', { variant: 'error' })
+      return
+    }
+
+    setDistributingRewardId(reward.id)
+    try {
+      let distributedAmount = 0
+
+      for (const payout of payouts) {
+        const payment = await algorand.send.payment({
+          sender: activeAddress,
+          receiver: payout.donor.donor_address,
+          amount: microAlgos(payout.amount),
+        })
+
+        await recordRewardDistribution({
+          reward_id: reward.id,
+          project_id: project.id,
+          donor_address: payout.donor.donor_address,
+          amount: payout.amount,
+          txn_id: payment.transaction.txID(),
+        })
+
+        distributedAmount += payout.amount
+      }
+
+      await markRewardDistributed(reward.id, distributedAmount)
+      const { data: rewardData } = await getProjectRewards(project.id)
+      setRewards(rewardData || [])
+      enqueueSnackbar('Reward distributed to donors successfully', { variant: 'success' })
+    } catch (e) {
+      enqueueSnackbar(`Reward distribution failed: ${(e as Error).message}`, { variant: 'error' })
+    } finally {
+      setDistributingRewardId(null)
     }
   }
 
@@ -224,7 +368,7 @@ const ProjectDetail = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
-                {project.token_symbol && (
+                {project.token_enabled !== false && project.token_symbol && (
                   <span className="px-3 py-1 text-xs font-bold rounded-full bg-pink-100 text-pink-700">
                     ${project.token_symbol}
                   </span>
@@ -234,6 +378,20 @@ const ProjectDetail = () => {
                 {project.description || 'No description provided.'}
               </p>
             </div>
+
+            {project.project_plan_content && (
+              <div className="bg-white rounded-xl border border-pink-100 p-5">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  Project Plan & Donor Benefits
+                </h3>
+                {project.project_plan_filename && (
+                  <p className="text-xs text-gray-400 mb-3">Source: {project.project_plan_filename}</p>
+                )}
+                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
+                  {project.project_plan_content}
+                </pre>
+              </div>
+            )}
 
             {/* Links */}
             {(project.website_url || project.twitter_url || project.discord_url) && (
@@ -388,7 +546,7 @@ const ProjectDetail = () => {
               </div>
 
               {/* Creator-only: Withdraw */}
-              {activeAddress && activeAddress === project.creator_address && (
+                {isCreator && (
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Withdraw Funds</label>
                   <div className="flex gap-2">
@@ -409,10 +567,103 @@ const ProjectDetail = () => {
                   </div>
                 </div>
               )}
+
+              {isCreator && (
+                <div className="mt-6 pt-6 border-t border-gray-100 space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700">Creator Dashboard</h4>
+
+                  <div className="rounded-xl border border-gray-200 p-3 space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Donors ({donors.length})</p>
+                    {donors.length === 0 ? (
+                      <p className="text-xs text-gray-400">No donors yet.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {donors.map((donor) => (
+                          <div key={donor.id || donor.donor_address} className="flex items-center justify-between text-xs">
+                            <span className="font-mono text-gray-600">
+                              {ellipseAddress(donor.donor_address)}
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {(donor.total_donated / 1_000_000).toFixed(2)} ALGO
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-3 space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Create Reward</p>
+                    <input
+                      type="text"
+                      value={rewardTitle}
+                      onChange={(e) => setRewardTitle(e.target.value)}
+                      placeholder="Reward title"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                    />
+                    <textarea
+                      value={rewardDescription}
+                      onChange={(e) => setRewardDescription(e.target.value)}
+                      placeholder="Reward description"
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={rewardPoolAlgo}
+                        onChange={(e) => setRewardPoolAlgo(e.target.value)}
+                        placeholder="ALGO to distribute"
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                      />
+                      <button
+                        onClick={handleCreateReward}
+                        className="px-4 py-2 bg-pink-600 text-white rounded-lg text-sm font-medium hover:bg-pink-700"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-3 space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Rewards</p>
+                    {rewards.length === 0 ? (
+                      <p className="text-xs text-gray-400">No rewards created.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {rewards.map((reward) => (
+                          <div key={reward.id} className="rounded-lg border border-gray-100 p-2">
+                            <p className="text-sm font-medium text-gray-800">{reward.title}</p>
+                            {reward.description && (
+                              <p className="text-xs text-gray-500 mt-0.5">{reward.description}</p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-1">
+                              Pool: {(reward.reward_pool_amount / 1_000_000).toFixed(3)} ALGO
+                            </p>
+                            <button
+                              onClick={() => handleDistributeReward(reward)}
+                              disabled={Boolean(reward.is_distributed) || distributingRewardId === reward.id}
+                              className="mt-2 px-3 py-1.5 text-xs rounded-lg bg-gray-900 text-white hover:bg-black disabled:opacity-40"
+                            >
+                              {reward.is_distributed
+                                ? 'Distributed'
+                                : distributingRewardId === reward.id
+                                  ? 'Distributing...'
+                                  : 'Distribute Proportionally'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Trade / Liquidity Card */}
-            {project.token_id && project.token_id > 0 && (
+            {project.token_enabled !== false && project.token_id && project.token_id > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
                 <h3 className="font-semibold text-gray-900">Token Trading</h3>
                 <div className="text-sm text-gray-500 space-y-1">
