@@ -17,9 +17,13 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     description TEXT DEFAULT '',
     twitter_url TEXT DEFAULT '',
     linkedin_url TEXT DEFAULT '',
+    avatar_url TEXT DEFAULT '',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE user_profiles
+ADD COLUMN IF NOT EXISTS avatar_url TEXT DEFAULT '';
 
 CREATE INDEX IF NOT EXISTS idx_user_wallet ON user_profiles(wallet_address);
 

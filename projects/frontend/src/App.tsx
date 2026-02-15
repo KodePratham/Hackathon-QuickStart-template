@@ -8,6 +8,7 @@ import ProjectDetail from './pages/ProjectDetail'
 import Guide from './pages/Guide'
 import TinymanGuide from './pages/TinymanGuide'
 import { AuthProvider } from './contexts/AuthContext'
+import AvatarSetupPrompt from './components/AvatarSetupPrompt'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
 
 let supportedWallets: SupportedWallet[]
@@ -59,6 +60,7 @@ export default function App() {
       <WalletProvider manager={walletManager}>
         <AuthProvider>
           <BrowserRouter>
+            <AvatarSetupPrompt />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<Profile />} />

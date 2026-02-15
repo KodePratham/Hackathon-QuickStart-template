@@ -33,9 +33,14 @@ CREATE TABLE public.user_profiles (
   description TEXT NOT NULL DEFAULT '',
   twitter_url TEXT NOT NULL DEFAULT '',
   linkedin_url TEXT NOT NULL DEFAULT '',
+  avatar_url TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL
 );
+
+-- If table already exists, add avatar_url for existing projects
+ALTER TABLE public.user_profiles
+ADD COLUMN IF NOT EXISTS avatar_url TEXT NOT NULL DEFAULT '';
 
 -- Create an index on wallet_address for faster lookups
 CREATE INDEX idx_user_profiles_wallet_address ON public.user_profiles(wallet_address);
@@ -88,6 +93,7 @@ CREATE TRIGGER update_user_profiles_updated_at
 | description    | TEXT                     | User's bio/description                |
 | twitter_url    | TEXT                     | URL to user's Twitter/X profile       |
 | linkedin_url   | TEXT                     | URL to user's LinkedIn profile        |
+| avatar_url     | TEXT                     | Path to selected avatar image         |
 | created_at     | TIMESTAMP WITH TIME ZONE | When the profile was created          |
 | updated_at     | TIMESTAMP WITH TIME ZONE | When the profile was last updated     |
 

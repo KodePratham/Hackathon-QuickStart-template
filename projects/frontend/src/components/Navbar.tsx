@@ -3,10 +3,12 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import ConnectWallet from './ConnectWallet'
 import { ellipseAddress } from '../utils/ellipseAddress'
+import { useAuth } from '../contexts/AuthContext'
 
 const Navbar = () => {
   const [openWalletModal, setOpenWalletModal] = useState(false)
   const { activeAddress } = useWallet()
+  const { userProfile } = useAuth()
   const location = useLocation()
 
   const isActive = (path: string) => location.pathname === path
@@ -64,9 +66,13 @@ const Navbar = () => {
                 to="/profile"
                 className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-pink-50 transition-colors"
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-[10px] font-bold">
-                  {activeAddress.charAt(0)}
-                </div>
+                {userProfile?.avatar_url ? (
+                  <img src={userProfile.avatar_url} alt="Profile avatar" className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-[10px] font-bold">
+                    {activeAddress.charAt(0)}
+                  </div>
+                )}
                 <span className="text-sm font-medium text-gray-600 font-mono">
                   {ellipseAddress(activeAddress)}
                 </span>

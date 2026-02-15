@@ -264,9 +264,13 @@ const ProjectDetail = () => {
             <div className="bg-white rounded-xl border border-pink-100 p-5">
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Founder Profile</h3>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white font-bold text-lg">
-                  {founder?.name ? founder.name.charAt(0).toUpperCase() : '?'}
-                </div>
+                {founder?.avatar_url ? (
+                  <img src={founder.avatar_url} alt="Founder avatar" className="w-12 h-12 rounded-full object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white font-bold text-lg">
+                    {founder?.name ? founder.name.charAt(0).toUpperCase() : '?'}
+                  </div>
+                )}
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900">{founder?.name || 'Anonymous Founder'}</p>
                   <p className="text-xs text-gray-400 font-mono">{ellipseAddress(project.creator_address)}</p>

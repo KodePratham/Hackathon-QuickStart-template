@@ -18,6 +18,7 @@ export interface UserProfile {
   description: string
   twitter_url: string
   linkedin_url: string
+  avatar_url: string
   created_at?: string
   updated_at?: string
 }
@@ -33,6 +34,7 @@ export async function upsertUserProfile(profile: Omit<UserProfile, 'id' | 'creat
         description: profile.description,
         twitter_url: profile.twitter_url,
         linkedin_url: profile.linkedin_url,
+        avatar_url: profile.avatar_url,
         updated_at: new Date().toISOString(),
       },
       {

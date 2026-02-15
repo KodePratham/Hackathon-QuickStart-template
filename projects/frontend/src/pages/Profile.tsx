@@ -6,6 +6,7 @@ import { useSnackbar } from 'notistack'
 import ConnectWallet from '../components/ConnectWallet'
 import Navbar from '../components/Navbar'
 import { getProjectsByCreator, PiggyBankProject } from '../utils/piggybank_supabase'
+import { AVAILABLE_AVATARS } from '../utils/avatars'
 
 const Profile: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar()
@@ -17,6 +18,7 @@ const Profile: React.FC = () => {
     description: '',
     twitter_url: '',
     linkedin_url: '',
+    avatar_url: AVAILABLE_AVATARS[0],
   })
   const [isSaving, setIsSaving] = useState(false)
   const [projects, setProjects] = useState<PiggyBankProject[]>([])
@@ -30,6 +32,7 @@ const Profile: React.FC = () => {
         description: userProfile.description || '',
         twitter_url: userProfile.twitter_url || '',
         linkedin_url: userProfile.linkedin_url || '',
+        avatar_url: userProfile.avatar_url || AVAILABLE_AVATARS[0],
       })
     }
   }, [userProfile])
@@ -155,6 +158,22 @@ const Profile: React.FC = () => {
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Choose Avatar</label>
+                    <div className="grid grid-cols-5 gap-3">
+                      {AVAILABLE_AVATARS.map((avatar) => (
+                        <button
+                          key={avatar}
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, avatar_url: avatar }))}
+                          className={`rounded-full p-1 border-2 transition-colors ${formData.avatar_url === avatar ? 'border-pink-500' : 'border-transparent hover:border-pink-200'}`}
+                        >
+                          <img src={avatar} alt="Avatar option" className="w-full aspect-square rounded-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                       Display Name
                     </label>
@@ -241,9 +260,7 @@ const Profile: React.FC = () => {
               <div className="bg-white rounded-2xl border border-pink-100 p-6">
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Profile Preview</h3>
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-lg font-bold text-white">
-                    {formData.name?.charAt(0).toUpperCase() || '?'}
-                  </div>
+                  <img src={formData.avatar_url} alt="Selected avatar" className="w-12 h-12 rounded-full object-cover" />
                   <div className="min-w-0">
                     <p className="text-gray-900 font-semibold truncate">{formData.name || 'Your Name'}</p>
                     <p className="text-sm text-gray-500 line-clamp-3">{formData.description || 'Add a short bio to build trust with supporters.'}</p>
