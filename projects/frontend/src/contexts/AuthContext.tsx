@@ -10,6 +10,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>
   saveProfile: (profile: Omit<UserProfile, 'wallet_address' | 'id' | 'created_at' | 'updated_at'>) => Promise<{ success: boolean; error?: string }>
   isNewUser: boolean
+  needsAvatarSetup: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -50,6 +51,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           description: '',
           twitter_url: '',
           linkedin_url: '',
+          avatar_url: '',
         })
       }
     } catch (error) {
@@ -105,6 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshProfile,
     saveProfile,
     isNewUser,
+    needsAvatarSetup: !!activeAddress && !isNewUser && !!userProfile && !userProfile.avatar_url,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

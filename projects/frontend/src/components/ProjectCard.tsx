@@ -97,9 +97,13 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
 
         {/* Founder Info */}
         <div className="flex items-center gap-2.5 pt-3 border-t border-gray-50">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {founder?.name ? founder.name.charAt(0).toUpperCase() : '?'}
-          </div>
+          {founder?.avatar_url ? (
+            <img src={founder.avatar_url} alt="Founder avatar" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {founder?.name ? founder.name.charAt(0).toUpperCase() : '?'}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-800 truncate">
               {founder?.name || 'Anonymous'}
