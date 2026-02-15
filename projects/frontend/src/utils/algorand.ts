@@ -34,6 +34,7 @@ export interface CreateProjectParams {
   signer: TransactionSigner
   name: string
   description: string
+  tokenEnabled: boolean
   tokenName: string
   tokenSymbol: string
   tokenSupply: number // whole tokens (will be multiplied by 1e6 for 6 decimals)
@@ -65,6 +66,7 @@ export async function deployAndInitializeProject(
     signer,
     name,
     description,
+    tokenEnabled,
     tokenName,
     tokenSymbol,
     tokenSupply,
@@ -91,7 +93,7 @@ export async function deployAndInitializeProject(
   await algorand.send.payment({
     sender: senderAddress,
     receiver: appAddress,
-    amount: microAlgos(300_000), // 0.3 ALGO buffer for MBR + fees
+    amount: microAlgos(300_000),
   })
 
   // --- Step 3: Initialize project (mints the ASA) ---
@@ -104,13 +106,14 @@ export async function deployAndInitializeProject(
     amount: microAlgos(200_000),
   })
 
-  const initResult = await appClient.send.initializeProject({
+  const initResult = await (appClient as any).send.initializeProject({
     args: {
       name,
       description,
       tokenName,
       tokenSymbol,
       tokenSupply: supplyWithDecimals,
+      tokenEnabled,
       goal: goalMicroAlgos,
       mbrPay: mbrPayTxn,
     },
@@ -120,8 +123,17 @@ export async function deployAndInitializeProject(
 
   const tokenId = Number(initResult.return ?? 0)
 
-  if (tokenId <= 0) {
+  if (tokenEnabled && tokenId <= 0) {
     throw new Error('Token creation failed: token ID was not returned by initialize_project')
+  }
+
+  if (!tokenEnabled || tokenId <= 0) {
+    return {
+      appId,
+      appAddress,
+      tokenId: 0,
+      txnId: initResult.transaction.txID(),
+    }
   }
 
   try {

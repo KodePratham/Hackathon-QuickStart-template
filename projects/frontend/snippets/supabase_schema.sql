@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS piggybank_projects (
     token_name TEXT,
     token_symbol TEXT,
     token_total_supply BIGINT,
+    token_enabled BOOLEAN DEFAULT true,
     
     -- Funding details
     goal_amount BIGINT NOT NULL,     -- Goal in microAlgos
@@ -67,6 +68,9 @@ CREATE TABLE IF NOT EXISTS piggybank_projects (
     website_url TEXT,
     twitter_url TEXT,
     discord_url TEXT,
+    project_plan_content TEXT,
+    project_plan_filename TEXT,
+    project_plan_format TEXT DEFAULT 'text',
     
     -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -77,6 +81,18 @@ CREATE TABLE IF NOT EXISTS piggybank_projects (
 CREATE INDEX IF NOT EXISTS idx_piggybank_creator ON piggybank_projects(creator_address);
 CREATE INDEX IF NOT EXISTS idx_piggybank_token ON piggybank_projects(token_id);
 CREATE INDEX IF NOT EXISTS idx_piggybank_active ON piggybank_projects(is_active);
+
+ALTER TABLE piggybank_projects
+ADD COLUMN IF NOT EXISTS token_enabled BOOLEAN DEFAULT true;
+
+ALTER TABLE piggybank_projects
+ADD COLUMN IF NOT EXISTS project_plan_content TEXT;
+
+ALTER TABLE piggybank_projects
+ADD COLUMN IF NOT EXISTS project_plan_filename TEXT;
+
+ALTER TABLE piggybank_projects
+ADD COLUMN IF NOT EXISTS project_plan_format TEXT DEFAULT 'text';
 
 -- ============================================
 -- PIGGYBANK DEPOSITS TABLE
@@ -103,6 +119,24 @@ CREATE TABLE IF NOT EXISTS piggybank_deposits (
 -- Index for faster queries
 CREATE INDEX IF NOT EXISTS idx_deposits_project ON piggybank_deposits(project_id);
 CREATE INDEX IF NOT EXISTS idx_deposits_depositor ON piggybank_deposits(depositor_address);
+
+-- ============================================
+-- PROJECT DONORS AGGREGATE TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS piggybank_project_donors (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    project_id UUID REFERENCES piggybank_projects(id) ON DELETE CASCADE,
+    donor_address TEXT NOT NULL,
+    total_donated BIGINT NOT NULL DEFAULT 0,
+    donation_count INTEGER NOT NULL DEFAULT 0,
+    last_donated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(project_id, donor_address)
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_donors_project ON piggybank_project_donors(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_donors_address ON piggybank_project_donors(donor_address);
 
 -- ============================================
 -- PIGGYBANK WITHDRAWALS TABLE
@@ -157,6 +191,40 @@ CREATE INDEX IF NOT EXISTS idx_claims_project ON piggybank_token_claims(project_
 CREATE INDEX IF NOT EXISTS idx_claims_claimer ON piggybank_token_claims(claimer_address);
 
 -- ============================================
+-- PROJECT REWARDS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS piggybank_project_rewards (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    project_id UUID REFERENCES piggybank_projects(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    reward_pool_amount BIGINT NOT NULL,
+    distributed_amount BIGINT NOT NULL DEFAULT 0,
+    is_distributed BOOLEAN NOT NULL DEFAULT false,
+    created_by_address TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    distributed_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_rewards_project ON piggybank_project_rewards(project_id);
+
+-- ============================================
+-- REWARD DISTRIBUTIONS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS piggybank_reward_distributions (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    reward_id UUID REFERENCES piggybank_project_rewards(id) ON DELETE CASCADE,
+    project_id UUID REFERENCES piggybank_projects(id) ON DELETE CASCADE,
+    donor_address TEXT NOT NULL,
+    amount BIGINT NOT NULL,
+    txn_id TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reward_distributions_reward ON piggybank_reward_distributions(reward_id);
+CREATE INDEX IF NOT EXISTS idx_reward_distributions_project ON piggybank_reward_distributions(project_id);
+
+-- ============================================
 -- FUNCTION: Auto-update updated_at timestamp
 -- ============================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -181,6 +249,12 @@ CREATE TRIGGER update_piggybank_projects_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_piggybank_project_donors_updated_at ON piggybank_project_donors;
+CREATE TRIGGER update_piggybank_project_donors_updated_at
+    BEFORE UPDATE ON piggybank_project_donors
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
@@ -191,6 +265,9 @@ ALTER TABLE piggybank_projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_deposits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_withdrawals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_token_claims ENABLE ROW LEVEL SECURITY;
+ALTER TABLE piggybank_project_donors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE piggybank_project_rewards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE piggybank_reward_distributions ENABLE ROW LEVEL SECURITY;
 
 -- User profile policies
 CREATE POLICY "Profiles are viewable by everyone"
@@ -230,6 +307,18 @@ CREATE POLICY "Anyone can create deposits"
     ON piggybank_deposits FOR INSERT
     WITH CHECK (true);
 
+CREATE POLICY "Project donors are viewable by everyone"
+    ON piggybank_project_donors FOR SELECT
+    USING (true);
+
+CREATE POLICY "Anyone can create project donor aggregates"
+    ON piggybank_project_donors FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Anyone can update project donor aggregates"
+    ON piggybank_project_donors FOR UPDATE
+    USING (true);
+
 -- Policy: Anyone can read withdrawals
 CREATE POLICY "Withdrawals are viewable by everyone"
     ON piggybank_withdrawals FOR SELECT
@@ -248,4 +337,24 @@ CREATE POLICY "Token claims are viewable by everyone"
 -- Policy: Anyone can create token claims
 CREATE POLICY "Anyone can create token claims"
     ON piggybank_token_claims FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Project rewards are viewable by everyone"
+    ON piggybank_project_rewards FOR SELECT
+    USING (true);
+
+CREATE POLICY "Anyone can create project rewards"
+    ON piggybank_project_rewards FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Anyone can update project rewards"
+    ON piggybank_project_rewards FOR UPDATE
+    USING (true);
+
+CREATE POLICY "Reward distributions are viewable by everyone"
+    ON piggybank_reward_distributions FOR SELECT
+    USING (true);
+
+CREATE POLICY "Anyone can create reward distributions"
+    ON piggybank_reward_distributions FOR INSERT
     WITH CHECK (true);
