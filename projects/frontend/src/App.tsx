@@ -3,6 +3,7 @@ import { SnackbarProvider } from 'notistack'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './Home'
 import Profile from './pages/Profile'
+import PublicProfile from './pages/PublicProfile'
 import CreateProject from './pages/CreateProject'
 import ProjectDetail from './pages/ProjectDetail'
 import Guide from './pages/Guide'
@@ -64,6 +65,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:walletAddress" element={<PublicProfile />} />
               <Route path="/create" element={<CreateProject />} />
               <Route path="/project/:appId" element={<ProjectDetail />} />
               <Route path="/guide" element={<Guide />} />

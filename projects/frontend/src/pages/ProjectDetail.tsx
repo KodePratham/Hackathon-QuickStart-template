@@ -80,6 +80,8 @@ const ProjectDetail = () => {
     ? Math.min(100, ((project.total_deposited || 0) / project.goal_amount) * 100)
     : 0
 
+  const bannerUrl = project?.image_url?.trim() || '/Banner/piggybag-banner.png'
+
   const handleDeposit = async () => {
     if (!activeAddress || !appId || !project) {
       enqueueSnackbar('Connect wallet first', { variant: 'error' })
@@ -215,13 +217,7 @@ const ProjectDetail = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Hero image */}
             <div className="h-64 rounded-2xl overflow-hidden">
-              {project.image_url ? (
-                <img src={project.image_url} alt={project.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-pink-400 via-rose-400 to-pink-500 flex items-center justify-center">
-                  <span className="text-7xl">🐷</span>
-                </div>
-              )}
+              <img src={bannerUrl} alt={project.name} className="w-full h-full object-cover" />
             </div>
 
             {/* Title & Description */}
@@ -274,6 +270,9 @@ const ProjectDetail = () => {
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900">{founder?.name || 'Anonymous Founder'}</p>
                   <p className="text-xs text-gray-400 font-mono">{ellipseAddress(project.creator_address)}</p>
+                  <Link to={`/profile/${project.creator_address}`} className="text-xs text-pink-600 hover:text-pink-700">
+                    View creator profile
+                  </Link>
                   {founder?.description && (
                     <p className="text-sm text-gray-500 mt-1">{founder.description}</p>
                   )}

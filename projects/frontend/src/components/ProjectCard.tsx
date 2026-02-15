@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { PiggyBankProject } from '../utils/piggybank_supabase'
 import { getUserProfile, UserProfile } from '../utils/supabase'
 
@@ -9,6 +9,7 @@ interface ProjectCardProps {
 
 const ProjectCard = ({ project }: ProjectCardProps) => {
   const [founder, setFounder] = useState<UserProfile | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchFounder = async () => {
@@ -28,6 +29,8 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
     ? Math.floor((Date.now() - new Date(project.created_at).getTime()) / (1000 * 60 * 60 * 24))
     : 0
 
+  const bannerUrl = project.image_url?.trim() || '/Banner/piggybag-banner.png'
+
   return (
     <Link
       to={`/project/${project.app_id}`}
@@ -35,17 +38,11 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
     >
       {/* Project Image / Gradient Header */}
       <div className="h-40 relative overflow-hidden">
-        {project.image_url ? (
-          <img
-            src={project.image_url}
-            alt={project.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-pink-400 via-rose-400 to-pink-500 flex items-center justify-center">
-            <span className="text-5xl">🐷</span>
-          </div>
-        )}
+        <img
+          src={bannerUrl}
+          alt={project.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
         {/* Status badge */}
         <div className="absolute top-3 right-3">
           {project.is_goal_reached ? (
@@ -111,6 +108,17 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
             <p className="text-xs text-gray-400 truncate font-mono">
               {project.creator_address.slice(0, 6)}...{project.creator_address.slice(-4)}
             </p>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                navigate(`/profile/${project.creator_address}`)
+              }}
+              className="text-xs text-pink-600 mt-0.5 hover:text-pink-700"
+            >
+              View creator profile
+            </button>
           </div>
           {founder?.twitter_url && (
             <a
