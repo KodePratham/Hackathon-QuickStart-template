@@ -4,9 +4,10 @@ import { useSnackbar } from 'notistack'
 import { useNavigate } from 'react-router-dom'
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { getAlgodConfigFromViteEnvironment, getIndexerConfigFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
-import { createPiggyBankProject } from '../utils/piggybank_supabase'
+import { createPiggyBankProject, updateProjectTweetPostUrl } from '../utils/piggybank_supabase'
 import { deployAndInitializeProject, getTinymanPoolUrl } from '../utils/algorand'
 import Navbar from '../components/Navbar'
+import { normalizeTwitterStatusUrlInput } from '../utils/twitter'
 
 const CreateProject = () => {
   const navigate = useNavigate()
@@ -50,6 +51,20 @@ const CreateProject = () => {
     tokenId: number
     txnId: string
   } | null>(null)
+  const [tweetPostUrlInput, setTweetPostUrlInput] = useState('')
+  const [savedTweetPostUrl, setSavedTweetPostUrl] = useState('')
+  const [savingTweetPostUrl, setSavingTweetPostUrl] = useState(false)
+
+  const projectPublicUrl = useMemo(
+    () => (deployResult ? `${window.location.origin}/project/${deployResult.appId}` : ''),
+    [deployResult],
+  )
+
+  const tweetIntentUrl = useMemo(() => {
+    if (!projectPublicUrl) return ''
+    const tweetText = `I just launched my fundraiser on PiggyBag: ${projectName}`
+    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(projectPublicUrl)}`
+  }, [projectName, projectPublicUrl])
 
   const handleDeploy = async () => {
     if (!activeAddress) {
@@ -154,11 +169,35 @@ const CreateProject = () => {
     setProjectPlanFormat(isMarkdown ? 'markdown' : 'text')
   }
 
+  const handleSaveTweetPostUrl = async () => {
+    if (!deployResult) return
+
+    const normalized = normalizeTwitterStatusUrlInput(tweetPostUrlInput)
+
+    if (!normalized) {
+      enqueueSnackbar('Please enter a valid tweet/status URL from x.com or twitter.com', { variant: 'error' })
+      return
+    }
+
+    setSavingTweetPostUrl(true)
+    try {
+      const { error } = await updateProjectTweetPostUrl(deployResult.appId, normalized)
+      if (error) throw error
+      setSavedTweetPostUrl(normalized)
+      setTweetPostUrlInput(normalized)
+      enqueueSnackbar('Tweet verification link saved to your project', { variant: 'success' })
+    } catch (e) {
+      enqueueSnackbar(`Failed to save tweet link: ${(e as Error).message}`, { variant: 'error' })
+    } finally {
+      setSavingTweetPostUrl(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="pt-24 pb-16 px-6 max-w-3xl mx-auto">
+      <main className="pt-32 md:pt-24 pb-16 px-6 max-w-3xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Create a Fundraiser</h1>
           <p className="text-gray-500 mt-2">
@@ -178,7 +217,7 @@ const CreateProject = () => {
         ) : (
           <div className="space-y-6">
             {/* Step indicators */}
-            <div className="flex items-center gap-2 mb-8">
+            <div className="flex flex-wrap items-center gap-2 mb-8">
                 {[
                 { num: 1, label: 'Project' },
                 { num: 2, label: 'Token (Optional)' },
@@ -188,7 +227,7 @@ const CreateProject = () => {
                 <button
                   key={num}
                   onClick={() => num < step && num < 4 && setStep(num)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
                     step === num
                       ? 'bg-pink-600 text-white'
                       : step > num
@@ -573,6 +612,51 @@ const CreateProject = () => {
                       className="flex-1 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors text-center"
                     >
                       💧 Create Trading Pool
+                    </a>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl border border-pink-100 p-4 text-left max-w-md mx-auto space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-800">Tweet your project for verification</h4>
+                  <p className="text-xs text-gray-500">
+                    Post your project link from your real account, then paste that tweet URL below so donors can verify it.
+                  </p>
+                  {tweetIntentUrl && (
+                    <a
+                      href={tweetIntentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full py-2.5 text-center bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-900"
+                    >
+                      Post on X / Twitter
+                    </a>
+                  )}
+
+                  <div className="space-y-2">
+                    <input
+                      type="url"
+                      value={tweetPostUrlInput}
+                      onChange={(e) => setTweetPostUrlInput(e.target.value)}
+                      placeholder="https://x.com/username/status/..."
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                    />
+                    <button
+                      onClick={handleSaveTweetPostUrl}
+                      disabled={savingTweetPostUrl || !tweetPostUrlInput.trim()}
+                      className="w-full py-2.5 bg-pink-600 text-white rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-40"
+                    >
+                      {savingTweetPostUrl ? 'Saving...' : 'Save Tweet Verification Link'}
+                    </button>
+                  </div>
+
+                  {savedTweetPostUrl && (
+                    <a
+                      href={savedTweetPostUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-pink-600 hover:underline"
+                    >
+                      View saved verification tweet ↗
                     </a>
                   )}
                 </div>

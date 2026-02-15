@@ -6,6 +6,7 @@ import Profile from './pages/Profile'
 import PublicProfile from './pages/PublicProfile'
 import CreateProject from './pages/CreateProject'
 import ProjectDetail from './pages/ProjectDetail'
+import ProjectRewardsWithdraw from './pages/ProjectRewardsWithdraw'
 import Guide from './pages/Guide'
 import TinymanGuide from './pages/TinymanGuide'
 import { AuthProvider } from './contexts/AuthContext'
@@ -68,6 +69,7 @@ export default function App() {
               <Route path="/profile/:walletAddress" element={<PublicProfile />} />
               <Route path="/create" element={<CreateProject />} />
               <Route path="/project/:appId" element={<ProjectDetail />} />
+              <Route path="/project/:appId/manage" element={<ProjectRewardsWithdraw />} />
               <Route path="/guide" element={<Guide />} />
               <Route path="/tinyman-guide" element={<TinymanGuide />} />
             </Routes>

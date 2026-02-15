@@ -91,7 +91,7 @@ const Profile: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
       <Navbar />
 
-      <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto space-y-8">
+      <main className="pt-32 md:pt-24 pb-16 px-6 max-w-7xl mx-auto space-y-8">
         <section className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">

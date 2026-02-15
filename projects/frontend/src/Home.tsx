@@ -21,7 +21,7 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-pink-50/40 via-white to-white">
       <Navbar />
 
-      <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto">
+      <main className="pt-32 md:pt-24 pb-16 px-6 max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 fade-in-up">
           <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-pink-50 border border-pink-100">

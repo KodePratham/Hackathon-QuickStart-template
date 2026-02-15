@@ -5,7 +5,7 @@ const Guide = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="pt-24 pb-16 px-6 max-w-4xl mx-auto">
+      <main className="pt-32 md:pt-24 pb-16 px-6 max-w-4xl mx-auto">
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Getting Started Guide</h1>
           <p className="text-gray-500 mt-2">

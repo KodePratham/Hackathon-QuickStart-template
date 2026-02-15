@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS piggybank_projects (
     image_url TEXT,
     website_url TEXT,
     twitter_url TEXT,
+    tweet_post_url TEXT,
     discord_url TEXT,
     project_plan_content TEXT,
     project_plan_filename TEXT,
@@ -93,6 +94,12 @@ ADD COLUMN IF NOT EXISTS project_plan_filename TEXT;
 
 ALTER TABLE piggybank_projects
 ADD COLUMN IF NOT EXISTS project_plan_format TEXT DEFAULT 'text';
+
+ALTER TABLE piggybank_projects
+ADD COLUMN IF NOT EXISTS tweet_post_url TEXT;
+
+ALTER TABLE piggybank_projects
+ADD COLUMN IF NOT EXISTS discord_url TEXT;
 
 -- ============================================
 -- PIGGYBANK DEPOSITS TABLE
@@ -225,6 +232,20 @@ CREATE INDEX IF NOT EXISTS idx_reward_distributions_reward ON piggybank_reward_d
 CREATE INDEX IF NOT EXISTS idx_reward_distributions_project ON piggybank_reward_distributions(project_id);
 
 -- ============================================
+-- PROJECT ANNOUNCEMENTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS piggybank_project_announcements (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    project_id UUID REFERENCES piggybank_projects(id) ON DELETE CASCADE,
+    tweet_url TEXT NOT NULL,
+    created_by_address TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_announcements_project ON piggybank_project_announcements(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_announcements_created_at ON piggybank_project_announcements(created_at DESC);
+
+-- ============================================
 -- FUNCTION: Auto-update updated_at timestamp
 -- ============================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -268,6 +289,7 @@ ALTER TABLE piggybank_token_claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_project_donors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_project_rewards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piggybank_reward_distributions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE piggybank_project_announcements ENABLE ROW LEVEL SECURITY;
 
 -- User profile policies
 CREATE POLICY "Profiles are viewable by everyone"
@@ -357,4 +379,12 @@ CREATE POLICY "Reward distributions are viewable by everyone"
 
 CREATE POLICY "Anyone can create reward distributions"
     ON piggybank_reward_distributions FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Project announcements are viewable by everyone"
+    ON piggybank_project_announcements FOR SELECT
+    USING (true);
+
+CREATE POLICY "Anyone can create project announcements"
+    ON piggybank_project_announcements FOR INSERT
     WITH CHECK (true);

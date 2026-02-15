@@ -36,6 +36,7 @@ export interface PiggyBankProject {
   image_url?: string
   website_url?: string
   twitter_url?: string
+  tweet_post_url?: string
   discord_url?: string
   token_enabled?: boolean
   project_plan_content?: string
@@ -109,6 +110,14 @@ export interface PiggyBankRewardDistribution {
   donor_address: string
   amount: number
   txn_id: string
+  created_at?: string
+}
+
+export interface PiggyBankProjectAnnouncement {
+  id?: string
+  project_id: string
+  tweet_url: string
+  created_by_address: string
   created_at?: string
 }
 
@@ -190,6 +199,23 @@ export async function updateProject(
     .single()
 
   return { data, error }
+}
+
+/**
+ * Save the project announcement tweet URL for verification
+ */
+export async function updateProjectTweetPostUrl(
+  appId: number,
+  tweetPostUrl: string,
+) {
+  const { data, error } = await piggyBankSupabase
+    .from('piggybank_projects')
+    .update({ tweet_post_url: tweetPostUrl })
+    .eq('app_id', appId)
+    .select()
+    .single()
+
+  return { data: data as PiggyBankProject | null, error }
 }
 
 /**
@@ -485,6 +511,38 @@ export async function markRewardDistributed(
     .single()
 
   return { data: data as PiggyBankReward | null, error }
+}
+
+// ============================================
+// ANNOUNCEMENT FUNCTIONS
+// ============================================
+
+/**
+ * Create a tweet-link announcement for a project
+ */
+export async function createProjectAnnouncement(
+  announcement: Omit<PiggyBankProjectAnnouncement, 'id' | 'created_at'>,
+) {
+  const { data, error } = await piggyBankSupabase
+    .from('piggybank_project_announcements')
+    .insert(announcement)
+    .select()
+    .single()
+
+  return { data: data as PiggyBankProjectAnnouncement | null, error }
+}
+
+/**
+ * Get all announcements for a project
+ */
+export async function getProjectAnnouncements(projectId: string) {
+  const { data, error } = await piggyBankSupabase
+    .from('piggybank_project_announcements')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
+
+  return { data: data as PiggyBankProjectAnnouncement[] | null, error }
 }
 
 // ============================================
