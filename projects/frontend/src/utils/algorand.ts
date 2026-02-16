@@ -10,7 +10,6 @@
 
 import algosdk, {
   getApplicationAddress,
-  makePaymentTxnWithSuggestedParamsFromObject,
   makeAssetTransferTxnWithSuggestedParamsFromObject,
 } from 'algosdk'
 import { AlgorandClient, microAlgos } from '@algorandfoundation/algokit-utils'
@@ -41,6 +40,9 @@ export interface CreateProjectParams {
   goalAlgos: number   // in ALGO (will be multiplied by 1e6 for microAlgos)
   tokenImageUrl?: string
 }
+
+const PROJECT_CREATION_ROYALTY_ADDRESS = 'AF5P2XHG6S5JOWSRCX2VY7G3RFOASTOXCRELH273DSCOXS7WLXLDEWMXAY'
+const PROJECT_CREATION_ROYALTY_MICROALGOS = 100_000
 
 // ---------------------------------------------------------------------------
 // 1. Deploy + Initialize – single user action
@@ -137,6 +139,12 @@ export async function deployAndInitializeProject(
   })
 
   const tokenId = Number(initResult.return ?? 0)
+
+  await algorand.send.payment({
+    sender: senderAddress,
+    receiver: PROJECT_CREATION_ROYALTY_ADDRESS,
+    amount: microAlgos(PROJECT_CREATION_ROYALTY_MICROALGOS),
+  })
 
   if (tokenEnabled && tokenId <= 0) {
     throw new Error('Token creation failed: token ID was not returned by initialize_project')

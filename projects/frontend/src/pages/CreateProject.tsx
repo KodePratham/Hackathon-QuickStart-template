@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { getAlgodConfigFromViteEnvironment, getIndexerConfigFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 import { createPiggyBankProject, updateProjectTweetPostUrl } from '../utils/piggybank_supabase'
-import { deployAndInitializeProject, getTinymanPoolUrl } from '../utils/algorand'
+import { deployAndInitializeProject } from '../utils/algorand'
 import Navbar from '../components/Navbar'
 import { normalizeTwitterStatusUrlInput } from '../utils/twitter'
 
@@ -37,12 +37,6 @@ const CreateProject = () => {
   const [projectPlanContent, setProjectPlanContent] = useState('')
   const [projectPlanFilename, setProjectPlanFilename] = useState('')
   const [projectPlanFormat, setProjectPlanFormat] = useState<'markdown' | 'text'>('text')
-
-  // Step 2: Token Details
-  const [tokenEnabled, setTokenEnabled] = useState(false)
-  const [tokenName, setTokenName] = useState('')
-  const [tokenSymbol, setTokenSymbol] = useState('')
-  const [tokenSupply, setTokenSupply] = useState('1000000')
 
   // Deployment result
   const [deployResult, setDeployResult] = useState<{
@@ -76,26 +70,11 @@ const CreateProject = () => {
       return
     }
 
-    if (tokenEnabled && (!tokenName || !tokenSymbol)) {
-      enqueueSnackbar('Please fill token name and symbol or disable token creation', { variant: 'error' })
-      return
-    }
-
     setLoading(true)
     setDeployStatus('Deploying smart contract...')
 
     try {
-      const effectiveTokenName = tokenEnabled
-        ? tokenName
-        : `${projectName.slice(0, 20)} Support Token`
-      const effectiveTokenSymbol = tokenEnabled
-        ? tokenSymbol
-        : 'SUPPORT'
-      const effectiveTokenSupply = tokenEnabled
-        ? parseInt(tokenSupply)
-        : 1_000_000
-
-      // 1. Deploy contract + initialize + mint token — all in one flow
+      // 1. Deploy contract + initialize — all in one flow
       setDeployStatus('Deploying smart contract to Algorand...')
       const result = await deployAndInitializeProject({
         algorand,
@@ -103,12 +82,11 @@ const CreateProject = () => {
         signer: transactionSigner,
         name: projectName,
         description: projectDescription || '',
-        tokenEnabled,
-        tokenName: effectiveTokenName,
-        tokenSymbol: effectiveTokenSymbol,
-        tokenSupply: effectiveTokenSupply,
+        tokenEnabled: false,
+        tokenName: '',
+        tokenSymbol: '',
+        tokenSupply: 0,
         goalAlgos: parseFloat(goalAmount),
-        tokenImageUrl: imageUrl || undefined,
       })
 
       setDeployResult(result)
@@ -120,11 +98,8 @@ const CreateProject = () => {
         app_address: result.appAddress,
         name: projectName,
         description: projectDescription,
-        token_id: result.tokenId,
-        token_name: tokenEnabled ? tokenName : undefined,
-        token_symbol: tokenEnabled ? tokenSymbol : undefined,
-        token_total_supply: tokenEnabled ? parseInt(tokenSupply) * 1_000_000 : undefined,
-        token_enabled: tokenEnabled,
+        token_id: 0,
+        token_enabled: false,
         goal_amount: Math.round(parseFloat(goalAmount) * 1_000_000),
         creator_address: activeAddress,
         image_url: imageUrl || undefined,
@@ -201,7 +176,7 @@ const CreateProject = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Create a Fundraiser</h1>
           <p className="text-gray-500 mt-2">
-            Launch your project, mint a token, and receive on-chain support in minutes.
+            Launch your project and receive on-chain support in minutes.
           </p>
         </div>
 
@@ -220,8 +195,7 @@ const CreateProject = () => {
             <div className="flex flex-wrap items-center gap-2 mb-8">
                 {[
                 { num: 1, label: 'Project' },
-                { num: 2, label: 'Token (Optional)' },
-                { num: 3, label: 'Launch' },
+                { num: 2, label: 'Launch' },
                 ...(deployResult ? [{ num: 4, label: 'Done' }] : []),
               ].map(({ num, label }) => (
                 <button
@@ -368,120 +342,13 @@ const CreateProject = () => {
                   disabled={!projectName || !goalAmount}
                   className="w-full py-3 bg-pink-600 text-white rounded-xl font-medium hover:bg-pink-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Continue to Token Setup →
+                  Continue to Launch →
                 </button>
               </div>
             )}
 
-            {/* Step 2: Token Details */}
+            {/* Step 2: Review & Launch */}
             {step === 2 && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
-                <h2 className="text-lg font-semibold">Token Details</h2>
-                <p className="text-sm text-gray-500">
-                  Token minting is optional. Enable it if you want supporters to receive a tradeable ASA token.
-                </p>
-
-                <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50">
-                  <input
-                    type="checkbox"
-                    checked={tokenEnabled}
-                    onChange={(e) => setTokenEnabled(e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">Create a project token</p>
-                    <p className="text-xs text-gray-500">If off, your fundraiser works without token utilities.</p>
-                  </div>
-                </label>
-
-                {tokenEnabled && (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Token Name *</label>
-                        <input
-                          type="text"
-                          value={tokenName}
-                          onChange={(e) => setTokenName(e.target.value)}
-                          maxLength={32}
-                          placeholder="e.g. RoboToken"
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Token Symbol * (max 8)</label>
-                        <input
-                          type="text"
-                          value={tokenSymbol}
-                          onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
-                          placeholder="e.g. ROBO"
-                          maxLength={8}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Token Total Supply</label>
-                      <input
-                        type="number"
-                        value={tokenSupply}
-                        onChange={(e) => setTokenSupply(e.target.value)}
-                        placeholder="1000000"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400"
-                      />
-                      <p className="text-xs text-gray-400 mt-1">Tokens have 6 decimals. 1,000,000 = 1M tokens.</p>
-                    </div>
-                  </>
-                )}
-
-                {/* What happens info */}
-                <div className="bg-green-50 rounded-xl p-4 border border-green-100">
-                  <h4 className="text-sm font-semibold text-green-800 mb-1">✅ No CLI needed!</h4>
-                  <p className="text-xs text-green-700 leading-relaxed">
-                    Everything happens from your wallet. When you click &quot;Launch&quot;, we deploy the
-                    smart contract, mint your token, and save your project — all in one step. Just approve
-                    the transactions in your wallet.
-                  </p>
-                </div>
-
-                {/* Liquidity info */}
-                <div className="bg-pink-50 rounded-xl p-4 border border-pink-100">
-                  <h4 className="text-sm font-semibold text-pink-800 mb-1">💧 Token Trading on Tinyman</h4>
-                  <p className="text-xs text-pink-700 leading-relaxed">
-                    After launching, you can create a trading pool on{' '}
-                    <a
-                      href="https://testnet.tinyman.org"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline font-medium"
-                    >
-                      Tinyman DEX
-                    </a>
-                    {' '}so supporters can buy/sell your token. We&apos;ll give you a direct link after launch.
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setStep(1)}
-                    className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-                  >
-                    ← Back
-                  </button>
-                  <button
-                    onClick={() => setStep(3)}
-                    disabled={tokenEnabled && (!tokenName || !tokenSymbol)}
-                    className="flex-1 py-3 bg-pink-600 text-white rounded-xl font-medium hover:bg-pink-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Review & Launch →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Review & Launch */}
-            {step === 3 && (
               <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
                 <h2 className="text-lg font-semibold">Review & Launch</h2>
 
@@ -489,8 +356,8 @@ const CreateProject = () => {
                 <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 space-y-2">
                   <h4 className="text-sm font-semibold text-amber-900">💰 Estimated Cost</h4>
                   <p className="text-xs text-amber-800 leading-relaxed">
-                    Deploying costs approximately <strong>{tokenEnabled ? '0.5' : '0.3'} ALGO</strong>
-                    {' '}(contract creation{tokenEnabled ? ' + token minting fees' : ''}).
+                    Deploying costs approximately <strong>0.4 ALGO</strong>
+                    {' '}(contract creation + 0.1 ALGO royalty).
                     Make sure you have at least 1 ALGO in your wallet.
                   </p>
                 </div>
@@ -503,16 +370,6 @@ const CreateProject = () => {
                     <span className="font-medium text-gray-900">{projectName}</span>
                     <span className="text-gray-500">Goal</span>
                     <span className="font-medium text-gray-900">{goalAmount} ALGO</span>
-                    <span className="text-gray-500">Token</span>
-                    <span className="font-medium text-gray-900">
-                      {tokenEnabled ? `${tokenName} ($${tokenSymbol})` : 'Disabled'}
-                    </span>
-                    {tokenEnabled && (
-                      <>
-                        <span className="text-gray-500">Supply</span>
-                        <span className="font-medium text-gray-900">{parseInt(tokenSupply).toLocaleString()} tokens</span>
-                      </>
-                    )}
                     <span className="text-gray-500">Creator</span>
                     <span className="font-mono text-xs text-gray-600">
                       {activeAddress.slice(0, 8)}...{activeAddress.slice(-6)}
@@ -526,7 +383,7 @@ const CreateProject = () => {
                   <ol className="text-xs text-gray-600 space-y-1.5 list-decimal ml-4">
                     <li>Smart contract is deployed on Algorand (you&apos;ll approve in wallet)</li>
                     <li>Contract is funded with minimum balance</li>
-                    {tokenEnabled && <li>Your token <strong>${tokenSymbol}</strong> is minted on-chain as an ASA</li>}
+                    <li>0.1 ALGO royalty is paid on-chain</li>
                     <li>Project is saved and visible to everyone</li>
                   </ol>
                 </div>
@@ -541,7 +398,7 @@ const CreateProject = () => {
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setStep(2)}
+                    onClick={() => setStep(1)}
                     disabled={loading}
                     className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors disabled:opacity-40"
                   >
@@ -573,7 +430,6 @@ const CreateProject = () => {
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Launched!</h2>
                   <p className="text-gray-500">
                     Your project is live on Algorand.
-                    {tokenEnabled ? <> Token <strong>${tokenSymbol}</strong> has been minted.</> : null}
                   </p>
                 </div>
 
@@ -583,12 +439,6 @@ const CreateProject = () => {
                     <span className="text-gray-500">App ID</span>
                     <span className="font-mono font-medium">{deployResult.appId}</span>
                   </div>
-                  {tokenEnabled && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Token ID (ASA)</span>
-                      <span className="font-mono font-medium">{deployResult.tokenId}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-500">Contract</span>
                     <span className="font-mono text-xs">
@@ -605,16 +455,6 @@ const CreateProject = () => {
                   >
                     View Project →
                   </button>
-                  {tokenEnabled && deployResult.tokenId > 0 && (
-                    <a
-                      href={getTinymanPoolUrl(deployResult.tokenId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors text-center"
-                    >
-                      💧 Create Trading Pool
-                    </a>
-                  )}
                 </div>
 
                 <div className="bg-white rounded-xl border border-pink-100 p-4 text-left max-w-md mx-auto space-y-3">
@@ -661,19 +501,6 @@ const CreateProject = () => {
                     </a>
                   )}
                 </div>
-
-                {/* Tinyman explainer */}
-                {tokenEnabled && deployResult.tokenId > 0 && (
-                  <div className="bg-pink-50 rounded-xl p-4 border border-pink-100 text-left max-w-md mx-auto">
-                    <h4 className="text-sm font-semibold text-pink-800 mb-1">Make your token tradeable</h4>
-                    <p className="text-xs text-pink-700 leading-relaxed">
-                      Create a pool on Tinyman DEX to let anyone buy/sell your ${tokenSymbol} token.
-                      You&apos;ll provide some ALGO + tokens as initial liquidity. Click the button above
-                      to get started on Tinyman.
-                    </p>
-                  </div>
-                )}
-
                 {/* Explorer links */}
                 <div className="flex flex-wrap gap-2 justify-center text-xs">
                   <a
@@ -684,19 +511,6 @@ const CreateProject = () => {
                   >
                     View on Explorer ↗
                   </a>
-                  {tokenEnabled && (
-                    <>
-                      <span className="text-gray-300">|</span>
-                      <a
-                        href={`https://testnet.algoexplorer.io/asset/${deployResult.tokenId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-pink-600 hover:underline"
-                      >
-                        View Token ↗
-                      </a>
-                    </>
-                  )}
                   <span className="text-gray-300">|</span>
                   <a
                     href={`https://testnet.algoexplorer.io/tx/${deployResult.txnId}`}
